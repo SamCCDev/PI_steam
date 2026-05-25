@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteamPredict - Dashboard ML Avanzado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .slider-custom {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #334155;
+            outline: none;
+        }
+        .slider-custom::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            transition: background .15s ease-in-out;
+        }
+        .slider-custom::-webkit-slider-thumb:hover { background: #60a5fa; }
+        .transition-bar { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.8s ease; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Checkbox styling */
+        .tag-checkbox:checked + div {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="border-b border-slate-700 bg-slate-900/80 p-4 shrink-0 z-10 glass-panel">
+        <div class="max-w-[1400px] mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg"><i data-lucide="cpu" class="text-white w-6 h-6"></i></div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white leading-tight">Steam<span class="text-blue-500">Predict</span></h1>
+                    <p class="text-xs text-slate-400">Modelo Fundacional v2.0</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-2 text-xs text-slate-400 bg-slate-800 py-1 px-3 rounded-full border border-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Backend: Databricks Cluster Activo
+                </div>
+                <div class="text-xs text-slate-400 flex items-center gap-1">
+                    <i data-lucide="database" class="w-3 h-3"></i> N = 26,450
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="flex-grow flex flex-col md:flex-row overflow-hidden max-w-[1400px] mx-auto w-full">
+        
+        <!-- LEFT COLUMN: INPUTS (Scrollable) -->
+        <div class="w-full md:w-5/12 lg:w-4/12 p-4 md:p-6 overflow-y-auto space-y-6 border-r border-slate-800">
+            
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-white">Parámetros del Proyecto</h2>
+                <button onclick="triggerUpdate()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium py-1.5 px-3 rounded-md transition flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i> Simular
+                </button>
+            </div>
+
+            <!-- NLP Section -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <i data-lucide="message-square" class="w-4 h-4 text-purple-400"></i> Descripción (Análisis NLP)
+                </label>
+                <textarea id="nlp_text" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition" placeholder="Ej: Un juego de supervivencia cooperativo en un mundo post-apocalíptico lleno de zombies..."></textarea>
+                <p class="text-[10px] text-slate-500 text-right">El modelo analizará el sentimiento y extraerá entidades clave.</p>
+            </div>
+
+            <!-- Mercado y Contexto -->
+            <div class="space-y-4 border-t border-slate-800 pt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-medium text-slate-300 flex items-center gap-2">
+                        <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i> Modelo de Negocio
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                        Precio de Venta <span id="priceVal" class="text-white font-bold">$19.99</span>
+                    </label>
+                    <input type="range" id="price" min="0" max="69.99" step="0.99" value="19.99" class="slider-custom">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Experiencia (Developer)</label>
+                        <select id="experience" class="w-full bg-slate-800 border border-slate-700 rounded-md p-1.5 text-xs text-white outline-none">
+                            <option value="novato">Novato (Primer Juego)</option>
+                            <option value="indie" selected>Indie Establecido</option>
+                            <option value="aa">Estudio AA / AAA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-400 mb-1">Campaña Kickstarter</label>
+                        <select id="kickstarter" class="w-full bg-slate-800 border border-slate-700 rounded-md p-1.5 text-xs text-white outline-none">
+                            <option value="no" selected>No / Sin campaña</option>
+                            <option value="yes">Sí (Financiado)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracción Pre-Lanzamiento -->
+            <div class="space-y-2 border-t border-slate-800 pt-4">
+                <label class="text-sm font-medium text-slate-300 flex items-center gap-2 mb-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-amber-400"></i> Tracción (Proxy Wishlists)
+                </label>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+                        Seguidores del Hub <span id="followersVal" class="text-amber-400 font-bold">5,000</span>
+                    </label>
+                    <input type="range" id="followers" min="0" max="100000" step="500" value="5000" class="slider-custom">
+                </div>
+            </div>
+
+            <!-- Etiquetas / Features (Matriz One-Hot simulada) -->
+            <div class="space-y-3 border-t border-slate-800 pt-4 pb-10">
+                <label class="text-sm font-medium text-slate-300 flex items-center gap-2 mb-2">
+                    <i data-lucide="tags" class="w-4 h-4 text-blue-400"></i> Etiquetas y Categorías (Matriz)
+                </label>
+                
+                <div class="grid grid-cols-2 gap-2" id="tags-container">
+                    <!-- Checkboxes generados dinámicamente -->
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-slate-800 grid grid-cols-3 gap-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="plat_win" checked class="rounded border-slate-600 text-blue-500 bg-slate-800 focus:ring-0 w-3 h-3">
+                        <span class="text-[11px] text-slate-400">Windows</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="plat_mac" class="rounded border-slate-600 text-blue-500 bg-slate-800 focus:ring-0 w-3 h-3">
+                        <span class="text-[11px] text-slate-400">macOS</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="plat_lin" class="rounded border-slate-600 text-blue-500 bg-slate-800 focus:ring-0 w-3 h-3">
+                        <span class="text-[11px] text-slate-400">Linux/Deck</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: RESULTS -->
+        <div class="w-full md:w-7/12 lg:w-8/12 p-4 md:p-6 bg-slate-900/30 overflow-y-auto flex flex-col relative">
+            
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-20 hidden flex-col items-center justify-center rounded-lg m-4">
+                <div class="loader mb-4"></div>
+                <p class="text-sm text-blue-400 font-mono tracking-widest uppercase">Consultando clúster Databricks...</p>
+            </div>
+
+            <!-- Top KPIs -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <!-- Viabilidad -->
+                <div class="glass-panel rounded-xl p-5 relative overflow-hidden lg:col-span-2">
+                    <div class="absolute -right-4 -top-4 opacity-5"><i data-lucide="bar-chart" class="w-40 h-40"></i></div>
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Probabilidad de Éxito (Umbral >20k uds)</h3>
+                    <div class="flex items-end gap-3 mb-4">
+                        <span id="probResult" class="text-6xl font-black text-white leading-none">--%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 mb-2">
+                        <div id="probBar" class="h-2 rounded-full transition-bar w-0"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                        <span>Fracaso Estadístico</span>
+                        <span>Rentable</span>
+                        <span>Hit Comercial</span>
+                    </div>
+                </div>
+
+                <!-- Reseñas -->
+                <div class="glass-panel rounded-xl p-5 flex flex-col justify-center border-t-2 border-t-emerald-500">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Recepción Est.</h3>
+                    <div class="flex items-center gap-2 mb-1">
+                        <i data-lucide="thumbs-up" class="w-5 h-5 text-emerald-500"></i>
+                        <span id="ratingResult" class="text-3xl font-bold text-white">--%</span>
+                    </div>
+                    <span id="ratingText" class="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded w-max">Positivas</span>
+                </div>
+            </div>
+
+            <!-- Ventas Est. -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="glass-panel rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Wishlists Calculadas</p>
+                        <p id="wishlistResult" class="text-2xl font-bold text-slate-200">--</p>
+                    </div>
+                    <i data-lucide="heart" class="w-6 h-6 text-pink-500/50"></i>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex justify-between items-center border-l-4 border-l-blue-500">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Rev. Bruto (Semana 1)</p>
+                        <p id="revenueResult" class="text-2xl font-bold text-emerald-400">--</p>
+                    </div>
+                    <i data-lucide="dollar-sign" class="w-6 h-6 text-emerald-500/50"></i>
+                </div>
+            </div>
+
+            <!-- Insights (Terminal Style) -->
+            <div class="glass-panel rounded-xl flex-grow flex flex-col overflow-hidden border border-slate-700 shadow-xl">
+                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex justify-between items-center shrink-0">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="terminal" class="text-slate-400 w-4 h-4"></i>
+                        <h2 class="text-xs font-mono font-semibold text-slate-300">Insights Estratégicos (Explicabilidad del Modelo)</h2>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-[#0a0f18] flex-grow overflow-y-auto space-y-3 font-mono text-sm" id="insightsContainer">
+                    <div class="text-slate-500 text-xs flex items-center justify-center h-full">
+                        Esperando ejecución del modelo...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Definición de Tags Disponibles
+        const availableTags = [
+            { id: 't_action', label: 'Acción' },
+            { id: 't_rpg', label: 'RPG' },
+            { id: 't_strategy', label: 'Estrategia' },
+            { id: 't_multiplayer', label: 'Multijugador Online' },
+            { id: 't_coop', label: 'Cooperativo' },
+            { id: 't_singleplayer', label: 'Un Jugador', checked: true },
+            { id: 't_openworld', label: 'Mundo Abierto' },
+            { id: 't_story', label: 'Rico en Historia' },
+            { id: 't_pixelart', label: 'Pixel Art' },
+            { id: 't_anime', label: 'Anime / VN' },
+            { id: 't_roguelike', label: 'Roguelike / Permadeath' },
+            { id: 't_survival', label: 'Supervivencia / Crafteo' },
+            { id: 't_horror', label: 'Terror' },
+            { id: 't_earlyaccess', label: 'Early Access' },
+        ];
+
+        // Renderizar tags en el HTML
+        const tagsContainer = document.getElementById('tags-container');
+        availableTags.forEach(tag => {
+            const isChecked = tag.checked ? 'checked' : '';
+            tagsContainer.innerHTML += `
+                <label class="relative flex cursor-pointer">
+                    <input type="checkbox" id="${tag.id}" class="sr-only tag-checkbox" ${isChecked}>
+                    <div class="w-full text-center py-1.5 px-2 rounded-md border border-slate-700 bg-slate-800 text-[11px] text-slate-400 font-medium transition-all hover:border-slate-500">
+                        ${tag.label}
+                    </div>
+                </label>
+            `;
+        });
+
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Actualizar visual de rangos
+        document.getElementById('price').addEventListener('input', (e) => {
+            document.getElementById('priceVal').innerText = parseFloat(e.target.value) === 0 ? "F2P" : `$${parseFloat(e.target.value).toFixed(2)}`;
+        });
+        document.getElementById('followers').addEventListener('input', (e) => {
+            document.getElementById('followersVal').innerText = parseInt(e.target.value).toLocaleString();
+        });
+
+        // Simular llamada al modelo
+        function triggerUpdate() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+            
+            // Simular latencia de red/procesamiento de Databricks (800ms)
+            setTimeout(() => {
+                calculatePredictions();
+                overlay.style.display = 'none';
+            }, 800);
+        }
+
+        function calculatePredictions() {
+            // Recolectar datos
+            const price = parseFloat(document.getElementById('price').value);
+            const exp = document.getElementById('experience').value;
+            const ks = document.getElementById('kickstarter').value;
+            const followers = parseInt(document.getElementById('followers').value);
+            const nlpText = document.getElementById('nlp_text').value.toLowerCase();
+            
+            // Obtener estado de tags
+            const tags = {};
+            availableTags.forEach(t => { tags[t.id] = document.getElementById(t.id).checked; });
+
+            // Variables de resultado
+            let prob = 35; // Base probability
+            let rating = 70; // Base rating
+            let insights = [];
+
+            // --- MOTOR NLP (Simulado) ---
+            if (nlpText.length > 50) prob += 5; // Recompensa por descripción detallada
+            
+            if (nlpText.includes('zombie') || nlpText.includes('zombies')) {
+                prob -= 5;
+                insights.push({ type: 'warn', msg: 'NLP: Mercado saturado detectado ("zombies"). Requiere innovación mecánica extrema.' });
+            }
+            if (nlpText.includes('blockchain') || nlpText.includes('nft') || nlpText.includes('cripto')) {
+                prob -= 40; rating -= 30;
+                insights.push({ type: 'crit', msg: 'NLP CRÍTICO: Las políticas de Steam prohíben explícitamente tecnología Blockchain/NFT. Riesgo de baneo de plataforma.' });
+            }
+            if (nlpText.includes('innovador') || nlpText.includes('único')) {
+                insights.push({ type: 'info', msg: 'NLP: El análisis de texto detecta intención de innovación. El modelo SVM requiere que las etiquetas respalden esta afirmación.' });
+            }
+
+            // --- MODELO LÓGICO (Reglas/Árboles de decisión simulados) ---
+            
+            // Precio
+            if (price === 0) {
+                prob += 20; rating -= 8;
+                insights.push({ type: 'info', msg: 'Modelo F2P: Mayor volumen de descargas garantizado, pero las reseñas tienden a ser más críticas por la monetización.' });
+            } else if (price > 29.99 && exp === 'novato') {
+                prob -= 25;
+                insights.push({ type: 'crit', msg: 'Pricing: Alta fricción. Cobrar >$30 siendo un estudio sin historial comprobable reduce drásticamente el ratio de conversión.' });
+            } else if (price > 0 && price <= 15) {
+                prob += 10;
+            }
+
+            // Experiencia y Crowdfunding
+            if (exp === 'aa') { prob += 20; rating += 5; }
+            if (ks === 'yes') {
+                prob += 15;
+                insights.push({ type: 'good', msg: 'Kickstarter: Financiamiento exitoso valida el Product-Market Fit preventivamente y garantiza ventas base.' });
+            }
+
+            // Matriz de Etiquetas
+            if (tags.t_openworld && exp === 'novato') {
+                prob -= 30; rating -= 20;
+                insights.push({ type: 'crit', msg: 'Scope Creep: La combinación [Mundo Abierto] + [Estudio Novato] tiene la tasa de fracaso técnico más alta del dataset.' });
+            }
+            if (tags.t_multiplayer || tags.t_coop) {
+                prob += 15;
+                insights.push({ type: 'good', msg: 'Redes: El componente cooperativo multiplica el "K-Factor" (viralidad). Cada usuario trae 1.5 usuarios adicionales en promedio.' });
+            }
+            if (tags.t_roguelike && tags.t_pixelart) {
+                prob += 5; rating += 5;
+                insights.push({ type: 'info', msg: 'Nicho: [Roguelike + Pixel Art] es un mercado altamente probado. Alta retención, aunque muy competitivo.' });
+            }
+            if (tags.t_anime && !tags.t_story) {
+                insights.push({ type: 'warn', msg: 'Anomalía de Tags: Los juegos [Anime] sin etiqueta [Rico en Historia] suelen tener peor rendimiento que la media del clúster.' });
+            }
+            if (tags.t_earlyaccess) {
+                rating -= 10;
+                insights.push({ type: 'warn', msg: 'Early Access: Los usuarios penalizan bugs en reseñas tempranas. Se asume un -10% de rating durante los primeros 6 meses.' });
+            }
+
+            // Tracción (Proxy = Seguidores)
+            const estimatedWishlists = followers * 9.2; // Multiplicador ajustado para el mock
+            if (followers < 1500) {
+                prob -= 20;
+                insights.push({ type: 'crit', msg: 'Tracción: < 1,500 seguidores. El algoritmo de visibilidad orgánica de Steam NO impulsará el juego en la portada.' });
+            } else if (followers > 15000) {
+                prob += 25;
+                insights.push({ type: 'good', msg: 'Tracción: Volumen crítico alcanzado. El juego entrará en la lista "Popular Upcoming", asegurando tráfico orgánico.' });
+            }
+
+            // --- CÁLCULOS Y RENDERIZADO ---
+            prob = Math.max(1, Math.min(99, Math.round(prob)));
+            rating = Math.max(15, Math.min(98, Math.round(rating)));
+            
+            // Ventas
+            const conversionRate = 0.15 * (price > 0 ? (1 - Math.min(price/100, 0.7)) : 1);
+            const salesW1 = Math.floor(estimatedWishlists * conversionRate);
+            const revenueW1 = price === 0 ? 0 : salesW1 * price * 0.7; // Asumiendo el 30% de Steam
+
+            // Actualizar UI - Probabilidad
+            document.getElementById('probResult').innerText = `${prob}%`;
+            const probBar = document.getElementById('probBar');
+            probBar.style.width = `${prob}%`;
+            if (prob >= 70) { probBar.style.backgroundColor = '#10b981'; document.getElementById('probResult').className = "text-6xl font-black text-emerald-400 leading-none"; }
+            else if (prob >= 40) { probBar.style.backgroundColor = '#eab308'; document.getElementById('probResult').className = "text-6xl font-black text-amber-400 leading-none"; }
+            else { probBar.style.backgroundColor = '#ef4444'; document.getElementById('probResult').className = "text-6xl font-black text-red-500 leading-none"; }
+
+            // Actualizar UI - Rating
+            document.getElementById('ratingResult').innerText = `${rating}%`;
+            const ratingColor = rating >= 80 ? 'text-emerald-400' : rating >= 60 ? 'text-amber-400' : 'text-red-400';
+            document.getElementById('ratingResult').className = `text-3xl font-bold ${ratingColor}`;
+            document.getElementById('ratingText').innerText = rating >= 80 ? 'Muy Positivas' : rating >= 60 ? 'Variadas' : 'Mayormente Negativas';
+
+            // Actualizar UI - Métricas
+            document.getElementById('wishlistResult').innerText = Math.floor(estimatedWishlists).toLocaleString();
+            document.getElementById('revenueResult').innerText = price === 0 ? "N/A (F2P)" : `$${Math.floor(revenueW1).toLocaleString()}`;
+
+            // Renderizar Insights en la Terminal
+            const insContainer = document.getElementById('insightsContainer');
+            insContainer.innerHTML = ''; // Limpiar
+            
+            if (insights.length === 0) insights.push({ type: 'info', msg: 'Pipeline procesado correctamente. Sin anomalías detectadas en la matriz cruzada.' });
+
+            insights.forEach(ins => {
+                let prefix = '';
+                let color = '';
+                if(ins.type === 'crit') { prefix = '[ERR]'; color = 'text-red-400'; }
+                else if(ins.type === 'warn') { prefix = '[WARN]'; color = 'text-amber-400'; }
+                else if(ins.type === 'good') { prefix = '[OK]'; color = 'text-emerald-400'; }
+                else { prefix = '[INFO]'; color = 'text-blue-400'; }
+
+                insContainer.innerHTML += `
+                    <div class="flex items-start gap-2 border-b border-slate-800/50 pb-2 mb-2 last:border-0 animate-pulse-once">
+                        <span class="${color} font-bold shrink-0">${prefix}</span>
+                        <span class="text-slate-300">${ins.msg}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Auto-ejecutar al cargar para mostrar datos base
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(triggerUpdate, 500); // Pequeño retraso para que cargue la fuente y UI
+        });
+    </script>
+    <style>
+        .animate-pulse-once {
+            animation: customPulse 0.5s ease-out;
+        }
+        @keyframes customPulse {
+            0% { opacity: 0.2; transform: translateX(-5px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</body>
+</html>
