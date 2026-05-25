@@ -1,0 +1,26 @@
+# Environment variables
+.env
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Project-specific logs
+*.log
+output/*.log
+
+# Temporary/Backup directories
+output copy_may22/
+output copymay24/
+output_copy_mayo8bk/
+
+# Checkpoint files (duplicates of the final CSVs)
+output/*_checkpoint.csv
