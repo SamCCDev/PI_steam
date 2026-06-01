@@ -34,7 +34,9 @@ DROP_ZERO_OWNERS = True
 # Columnas POST-lanzamiento / identificadores: NO usar como features pre-lanzamiento.
 ID_COLS = ["appid", "name", "developer", "publisher", "release_date"]
 TARGET_COLS = ["owners_lower_bound", "ccu"]
-POSTLAUNCH_COLS = ["positive", "negative", "rating_porcentaje"]   # outcome, fuga de datos
+# Outcome conocido solo TRAS el lanzamiento -> fuga de datos para un simulador pre-lanzamiento.
+# metacritic_score = nota de crítica especializada, publicada en/después del lanzamiento.
+POSTLAUNCH_COLS = ["positive", "negative", "rating_porcentaje", "metacritic_score"]
 BOOL_PREFIXES = ("genre_", "cat_", "tag_", "platform_", "is_")
 
 

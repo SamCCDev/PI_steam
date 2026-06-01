@@ -1,2 +1,8 @@
+# ETL (steam_etl.py, build_dataset.py)
 pandas>=2.0.0
 requests>=2.31.0
+numpy>=1.24.0
+
+# Modelado local opcional (en Databricks ya vienen preinstalados)
+# Permite correr la lógica de los notebooks 02-07 fuera de Databricks.
+scikit-learn>=1.3.0

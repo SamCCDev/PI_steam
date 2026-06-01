@@ -1,7 +1,24 @@
 # Plan de Acción Técnico — Predictor de Videojuegos en Steam
 
-**Stack:** Databricks Free Edition + PySpark / PySpark ML
+**Stack:** Databricks Free Edition (Unity Catalog) + scikit-learn (la MLlib clásica de PySpark está bloqueada en serverless; ver §2).
 **Anclado a:** `Documento Tecnico - Predictor de Videojuegos.md` (§3 Arquitectura, §4 Metodología ML, §6 Diccionario) y `VIDEO_GAMES_/VIDEO_GAMES_.md` (§5 Objetivos, §7 Marco Metodológico).
+
+---
+
+## 0. Estado de implementación
+
+| Fase | Estado | Artefacto |
+| :--- | :--- | :--- |
+| 1. ETL + robustez API | ✅ Hecho | `steam_etl.py` (+ `--source steamspy`), `build_dataset.py` → `output/dataset_ml.csv` |
+| 2. Feature engineering / data-ready | ✅ Hecho | `notebooks/01_data_prep` (features schema-driven, tablas UC) |
+| 3. Modelado (LR, SVM-RBF, MLP, Bayesiano) + CV | ✅ Hecho | `notebooks/02`–`07` (scikit-learn) |
+| 4. Dashboard + motor de recomendaciones | ✅ Hecho | `notebooks/04_dashboard` (`dbutils.widgets`) |
+
+**Dataset actual:** 5.863 juegos con `owners>0` (de 31.005 totales). **Resultados en test:** LR AUC 0.936 · SVM-RBF AUC 0.941 · MLP AUC 0.927 (todos > umbral MVP 0.65).
+
+**Cambio de arquitectura clave vs. plan original:** se modela con **scikit-learn** (no PySpark ML) porque Databricks Free Edition es serverless (Spark Connect) y bloquea la MLlib clásica. Beneficio colateral: SVM-RBF y MLP con ReLU/Tanh **sí** son posibles (las limitaciones de `LinearSVC`/`MultilayerPerceptronClassifier` eran de PySpark).
+
+**Pendiente (opcional):** reanudar la extracción para más juegos; scraping real de `hub_followers`; NLP sobre `short_description`; series de tiempo (RNN/LSTM).
 
 ---
 

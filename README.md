@@ -179,15 +179,25 @@ El entrenamiento se realiza en notebooks de Databricks usando PySpark ML. El pla
 | :--- | :--- | :--- |
 | 01 | `01_data_prep` | Lee la tabla `dataset_ml`, selecciona features (schema-driven), guarda tablas UC `features_silver` y `feature_columns`. |
 | 02 | `02_logistic_regression` | Baseline (`owners_lower_bound > 20.000`) + coeficientes (odds ratio) en tabla UC. |
-| 03 | `03_evaluation` | AUC, F1, matriz de confusión, CrossValidator (3 folds), tracking MLflow. |
+| 03 | `03_evaluation` | AUC, F1, matriz de confusión, GridSearchCV (3 folds), tracking MLflow. |
 | 04 | `04_dashboard` | Simulador con `dbutils.widgets` + motor de recomendaciones (reentrena en memoria). |
-| 05+ | `05_svm`, `06_mlp`, `07_bayesian` | Fase de pulido posterior al MVP. |
+| 05 | `05_svm` | Pulido: SVM con kernel **RBF** (`SVC`), fronteras no lineales. |
+| 06 | `06_mlp` | Pulido: Perceptrón Multicapa con **ReLU** (`MLPClassifier`). |
+| 07 | `07_bayesian_shrinkage` | Pulido: shrinkage bayesiano por developer (Empirical Bayes Beta-Binomial). |
 
-> El modelo **no se persiste como archivo** (eso requeriría DBFS/Volume): los datos viajan entre notebooks como tablas UC y el dashboard reentrena la Regresión Logística en segundos.
+> El modelo **no se persiste como archivo** (eso requeriría DBFS/Volume): los datos viajan entre notebooks como tablas UC y el dashboard reentrena en segundos.
 
-### Criterio de MVP terminado
+### Resultados (test, dataset de 5.863 juegos con `owners>0`)
 
-Los notebooks 01-04 ejecutan end-to-end sin errores y producen **AUC > 0.65** en el conjunto de test. La precisión se mejora en la fase de pulido.
+| Modelo | AUC | F1 |
+| :--- | :--- | :--- |
+| Regresión Logística | 0.936 | 0.910 |
+| SVM-RBF | 0.941 | 0.912 |
+| MLP (ReLU) | 0.927 | 0.935 |
+
+Los tres superan ampliamente el umbral MVP (AUC > 0.65).
+
+> **Nota sobre el balance:** al ampliar el dataset con los juegos más vendidos de SteamSpy, la clase "éxito" (>20k dueños) quedó en ~85%. Por eso se usa `class_weight="balanced"` y se reportan AUC/F1/matriz de confusión (no solo accuracy, que con 85% engaña).
 
 ### Limitaciones a tener en cuenta
 

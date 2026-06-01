@@ -64,7 +64,8 @@ display(df.groupBy("label").count())
 
 ID_COLS = {"appid", "name", "developer", "publisher", "release_date"}
 TARGET_COLS = {"owners_lower_bound", "ccu", "label"}
-POSTLAUNCH_COLS = {"positive", "negative", "rating_porcentaje"}
+# Outcome conocido solo TRAS el lanzamiento (fuga de datos para el simulador pre-lanzamiento)
+POSTLAUNCH_COLS = {"positive", "negative", "rating_porcentaje", "metacritic_score"}
 BOOL_PREFIXES = ("genre_", "cat_", "tag_", "platform_", "is_")
 CATEGORICAL_COLS = [c for c in ("controller_support", "dev_experience") if c in df.columns]
 
