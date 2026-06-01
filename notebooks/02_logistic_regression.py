@@ -66,37 +66,45 @@ print("Modelo entrenado.")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. Coeficientes interpretables (log-odds y odds ratio)
-# MAGIC Doc. Técnico §4.1: cuánto aporta cada feature a la probabilidad de éxito.
-# MAGIC `odds_ratio > 1` favorece el éxito; `< 1` lo penaliza.
+# MAGIC ## 2. Coeficientes interpretables por clase (multinomial)
+# MAGIC Doc. Técnico §4.1 (Softmax). En multiclase hay un set de coeficientes por clase
+# MAGIC (Flop/Rentable/Hit). `odds_ratio > 1` empuja hacia esa clase; `< 1` la aleja.
+# MAGIC Formato largo: una fila por (feature, clase).
 
 # COMMAND ----------
 
+CLASS_NAMES = {0: "Flop", 1: "Rentable", 2: "Hit"}
+
 feature_names = model.named_steps["pre"].get_feature_names_out()
-coefs = model.named_steps["clf"].coef_[0]
-intercept = float(model.named_steps["clf"].intercept_[0])
+clean = [n.split("__", 1)[-1] for n in feature_names]   # quitar prefijos num__/bool__/cat__
+coef_matrix = model.named_steps["clf"].coef_            # shape [n_clases, n_features]
+intercepts = model.named_steps["clf"].intercept_
+classes = list(model.named_steps["clf"].classes_)
 
-# Limpiar prefijos del ColumnTransformer (num__, bool__, cat__) para legibilidad
-clean = [n.split("__", 1)[-1] for n in feature_names]
-
-coef_df = pd.DataFrame({"feature": clean, "coef_logodds": coefs})
-coef_df["odds_ratio"] = np.exp(coef_df["coef_logodds"])
+rows = []
+for ci, cls in enumerate(classes):
+    for fi, fname in enumerate(clean):
+        rows.append({"clase": CLASS_NAMES.get(cls, str(cls)),
+                     "feature": fname,
+                     "coef_logodds": float(coef_matrix[ci, fi]),
+                     "odds_ratio": float(np.exp(coef_matrix[ci, fi])),
+                     "intercept_clase": float(intercepts[ci])})
+coef_df = pd.DataFrame(rows)
 coef_df["abs_impact"] = coef_df["coef_logodds"].abs()
-coef_df = coef_df.sort_values("abs_impact", ascending=False).reset_index(drop=True)
 
-print(f"Intercepto (log-odds base): {intercept:.4f}")
-display(spark.createDataFrame(coef_df))
+# Top factores que empujan hacia "Hit" (la clase más valiosa)
+print("Top factores hacia 'Hit':")
+hit = coef_df[coef_df["clase"] == "Hit"].sort_values("abs_impact", ascending=False).head(12)
+display(spark.createDataFrame(hit[["feature", "coef_logodds", "odds_ratio"]]))
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 3. Guardar coeficientes como tabla UC (para el dashboard)
+# MAGIC ## 3. Guardar coeficientes (todas las clases) como tabla UC (para el dashboard)
 
 # COMMAND ----------
 
-coef_out = coef_df.copy()
-coef_out["intercept"] = intercept
-(spark.createDataFrame(coef_out)
+(spark.createDataFrame(coef_df)
       .write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(COEF_TABLE))
 
-print(f"Coeficientes guardados en {COEF_TABLE}. Continuar en 03_evaluation.")
+print(f"Coeficientes (3 clases) guardados en {COEF_TABLE}. Continuar en 03_evaluation.")

@@ -65,22 +65,24 @@ print("SVM-RBF entrenado.")
 
 import mlflow
 
-proba = svm.predict_proba(X_test)[:, 1]
+CLASS_NAMES = ["Flop", "Rentable", "Hit"]
+proba = svm.predict_proba(X_test)            # [n, 3]
 pred = svm.predict(X_test)
-auc = roc_auc_score(y_test, proba)
-f1 = f1_score(y_test, pred)
+auc = roc_auc_score(y_test, proba, multi_class="ovr", average="macro")
+f1 = f1_score(y_test, pred, average="macro")
 acc = accuracy_score(y_test, pred)
 
 with mlflow.start_run(run_name="svm_rbf"):
     mlflow.log_params({"kernel": "rbf", "C": 1.0, "gamma": "scale"})
-    mlflow.log_metrics({"auc": float(auc), "f1": float(f1), "accuracy": float(acc)})
+    mlflow.log_metrics({"auc_ovr_macro": float(auc), "f1_macro": float(f1), "accuracy": float(acc)})
 
-print(f"SVM-RBF -> AUC={auc:.4f}  F1={f1:.4f}  Accuracy={acc:.4f}\n")
-cm = confusion_matrix(y_test, pred); tn, fp, fn, tp = cm.ravel()
-print(f"            Pred 0   Pred 1")
-print(f"  Real 0    {tn:>6}   {fp:>6}")
-print(f"  Real 1    {fn:>6}   {tp:>6}\n")
-print(classification_report(y_test, pred, target_names=["Fracaso", "Éxito"]))
+print(f"SVM-RBF -> AUC(ovr-macro)={auc:.4f}  F1(macro)={f1:.4f}  Accuracy={acc:.4f}\n")
+cm = confusion_matrix(y_test, pred, labels=[0, 1, 2])
+print(f"{'':>12}" + "".join(f"{n:>10}" for n in CLASS_NAMES))
+for i, n in enumerate(CLASS_NAMES):
+    print(f"{n:>12}" + "".join(f"{cm[i, j]:>10}" for j in range(3)))
+print()
+print(classification_report(y_test, pred, labels=[0, 1, 2], target_names=CLASS_NAMES))
 
 # COMMAND ----------
 

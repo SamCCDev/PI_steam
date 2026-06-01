@@ -14,7 +14,7 @@
 | 3. Modelado (LR, SVM-RBF, MLP, Bayesiano) + CV | ✅ Hecho | `notebooks/02`–`07` (scikit-learn) |
 | 4. Dashboard + motor de recomendaciones | ✅ Hecho | `notebooks/04_dashboard` (`dbutils.widgets`) |
 
-**Dataset actual:** 5.863 juegos con `owners>0` (de 31.005 totales). **Resultados en test:** LR AUC 0.936 · SVM-RBF AUC 0.941 · MLP AUC 0.927 (todos > umbral MVP 0.65).
+**Dataset actual:** 5.863 juegos con `owners>0` (de 31.005 totales). **Clasificación multiclase** Flop (<200k) / Rentable (200k–1M) / Hit (≥1M), balance ~26/50/24. **Resultados test:** LR AUC 0.920 · SVM-RBF 0.920 · MLP 0.916 (OVR-macro). El dashboard muestra P(Flop/Rentable/Hit) y recomienda cambios por su impacto en P(Hit).
 
 **Cambio de arquitectura clave vs. plan original:** se modela con **scikit-learn** (no PySpark ML) porque Databricks Free Edition es serverless (Spark Connect) y bloquea la MLlib clásica. Beneficio colateral: SVM-RBF y MLP con ReLU/Tanh **sí** son posibles (las limitaciones de `LinearSVC`/`MultilayerPerceptronClassifier` eran de PySpark).
 

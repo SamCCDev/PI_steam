@@ -175,29 +175,31 @@ El entrenamiento se realiza en notebooks de Databricks usando PySpark ML. El pla
 
 ### Estructura de notebooks (MVP funcional → pulido)
 
+**Clasificación multiclase (Doc. Técnico §4.1, Softmax):** `Flop` (<200k dueños) · `Rentable` (200k–1M) · `Hit` (≥1M). Balance ~26/50/24 sobre los 5.863 juegos con `owners>0`.
+
 | # | Notebook | Propósito |
 | :--- | :--- | :--- |
 | 01 | `01_data_prep` | Lee la tabla `dataset_ml`, selecciona features (schema-driven), guarda tablas UC `features_silver` y `feature_columns`. |
-| 02 | `02_logistic_regression` | Baseline (`owners_lower_bound > 20.000`) + coeficientes (odds ratio) en tabla UC. |
-| 03 | `03_evaluation` | AUC, F1, matriz de confusión, GridSearchCV (3 folds), tracking MLflow. |
-| 04 | `04_dashboard` | Simulador con `dbutils.widgets` + motor de recomendaciones (reentrena en memoria). |
+| 02 | `02_logistic_regression` | Baseline multinomial + coeficientes por clase (odds ratio) en tabla UC. |
+| 03 | `03_evaluation` | AUC (OVR-macro), F1-macro, matriz de confusión 3×3, GridSearchCV (3 folds), MLflow. |
+| 04 | `04_dashboard` | Simulador con `dbutils.widgets`: P(Flop/Rentable/Hit) + recomendaciones por impacto en P(Hit). |
 | 05 | `05_svm` | Pulido: SVM con kernel **RBF** (`SVC`), fronteras no lineales. |
 | 06 | `06_mlp` | Pulido: Perceptrón Multicapa con **ReLU** (`MLPClassifier`). |
 | 07 | `07_bayesian_shrinkage` | Pulido: shrinkage bayesiano por developer (Empirical Bayes Beta-Binomial). |
 
 > El modelo **no se persiste como archivo** (eso requeriría DBFS/Volume): los datos viajan entre notebooks como tablas UC y el dashboard reentrena en segundos.
 
-### Resultados (test, dataset de 5.863 juegos con `owners>0`)
+### Resultados (test, 5.863 juegos, 3 clases)
 
-| Modelo | AUC | F1 |
-| :--- | :--- | :--- |
-| Regresión Logística | 0.936 | 0.910 |
-| SVM-RBF | 0.941 | 0.912 |
-| MLP (ReLU) | 0.927 | 0.935 |
+| Modelo | AUC (OVR-macro) | F1 (macro) | Accuracy |
+| :--- | :--- | :--- | :--- |
+| Regresión Logística | 0.920 | 0.814 | 0.831 |
+| SVM-RBF | 0.920 | 0.839 | 0.858 |
+| MLP (ReLU) | 0.916 | 0.827 | 0.847 |
 
-Los tres superan ampliamente el umbral MVP (AUC > 0.65).
+Los tres modelos separan bien las 3 clases (Flop y Hit casi nunca se confunden entre sí).
 
-> **Nota sobre el balance:** al ampliar el dataset con los juegos más vendidos de SteamSpy, la clase "éxito" (>20k dueños) quedó en ~85%. Por eso se usa `class_weight="balanced"` y se reportan AUC/F1/matriz de confusión (no solo accuracy, que con 85% engaña).
+> **Nota sobre el dataset:** al ampliar con los juegos más vendidos de SteamSpy, el dataset quedó sesgado a títulos exitosos. Por eso el "éxito" se modela en 3 niveles (en vez de un umbral binario de 20k, que dejaba 85% en una sola clase) y se usa `class_weight="balanced"` + métricas macro.
 
 ### Limitaciones a tener en cuenta
 

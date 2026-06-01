@@ -110,4 +110,5 @@ ts_early_access;timeseries_postlaunch;int64;168;6.3;False;False
 ts_months_active;timeseries_postlaunch;int64;31;97.8;False;False
 ts_avg_playtime_hrs;timeseries_postlaunch;float64;3882;97.7;False;False
 ts_positive_ratio;timeseries_postlaunch;float64;665;96.8;False;False
-label;target_label;int64;2;85.5;False;False
+label;target_label;int64;3;74.2;False;False
+label_name;target_label;str;3;;False;False

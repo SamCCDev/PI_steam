@@ -25,7 +25,10 @@ import numpy as np, pandas as pd
 pdf = spark.table(SOURCE_TABLE).toPandas()
 df = pdf[(pdf["owners_lower_bound"] > 0)].copy() if "owners_lower_bound" in pdf.columns else pdf.copy()
 df["developer"] = df["developer"].fillna("").replace("", "Desconocido")
+# Outcome binario para el shrinkage: 'viable' = comercialmente exitoso (Rentable o Hit, label>=1)
+df["viable"] = (df["label"] >= 1).astype(int)
 print(f"Juegos: {len(df):,}  |  developers únicos: {df['developer'].nunique():,}")
+print(f"Tasa global de viabilidad (Rentable+Hit): {df['viable'].mean():.3f}")
 
 # COMMAND ----------
 
@@ -36,11 +39,11 @@ print(f"Juegos: {len(df):,}  |  developers únicos: {df['developer'].nunique():,
 
 # COMMAND ----------
 
-grp = df.groupby("developer")["label"].agg(n="count", k="sum")
+grp = df.groupby("developer")["viable"].agg(n="count", k="sum")
 multi = grp[grp["n"] >= 2].copy()
 rates = (multi["k"] / multi["n"])
 
-global_mean = df["label"].mean()
+global_mean = df["viable"].mean()
 m = float(rates.mean())
 v = float(rates.var(ddof=1))
 # Método de momentos Beta: kappa = m(1-m)/v - 1  (fuerza de la prior en pseudo-juegos)
@@ -59,7 +62,7 @@ print(f"Prior Beta -> α₀={alpha0:.2f}  β₀={beta0:.2f}  (fuerza κ={kappa:.
 
 # COMMAND ----------
 
-dev = df.groupby("developer")["label"].agg(n="count", k="sum").reset_index()
+dev = df.groupby("developer")["viable"].agg(n="count", k="sum").reset_index()
 dev["p_raw"] = dev["k"] / dev["n"]
 dev["p_shrunk"] = (dev["k"] + alpha0) / (dev["n"] + alpha0 + beta0)
 dev["shrinkage"] = (dev["p_raw"] - dev["p_shrunk"]).abs().round(3)

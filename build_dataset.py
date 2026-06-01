@@ -27,7 +27,13 @@ from pathlib import Path
 OUTPUT_DIR = Path("output")
 SEP = ";"
 
-SUCCESS_THRESHOLD = 20000
+# Clasificación multiclase del éxito comercial (Documento Técnico §4.1, Softmax).
+# Cortes en los buckets reales de SteamSpy sobre los juegos con owners>0:
+#   Flop (0) < 200k  |  Rentable (1) 200k–1M  |  Hit (2) >= 1M   (~26/50/24)
+FLOP_MAX_OWNERS = 200000    # por debajo de esto = Flop (buckets 20k/50k/100k)
+HIT_MIN_OWNERS  = 1000000   # a partir de esto = Hit (1M+)
+LABEL_NAMES = {0: "Flop", 1: "Rentable", 2: "Hit"}
+
 PRICE_CAP_USD = 200.0
 DROP_ZERO_OWNERS = True
 
@@ -122,7 +128,12 @@ def build():
         print(f"    owners>0: {before:,} -> {len(df):,} filas (descartadas {before-len(df):,} sin datos de ventas)")
 
     df["price"] = df["price"].clip(upper=PRICE_CAP_USD)
-    df["label"] = (df["owners_lower_bound"] > SUCCESS_THRESHOLD).astype(int)
+    # Etiqueta multiclase: 0=Flop, 1=Rentable, 2=Hit
+    df["label"] = np.select(
+        [df["owners_lower_bound"] >= HIT_MIN_OWNERS,
+         df["owners_lower_bound"] >= FLOP_MAX_OWNERS],
+        [2, 1], default=0).astype(int)
+    df["label_name"] = df["label"].map(LABEL_NAMES)
 
     # Tipos estrictos: booleanas/tags -> int 0/1; numéricas -> float; resto se infiere
     bool_cols = [c for c in df.columns if c.startswith(BOOL_PREFIXES)]
@@ -143,6 +154,7 @@ def build():
     def classify(col):
         if col in ID_COLS:                        return "id"
         if col == "label":                        return "target_label"
+        if col == "label_name":                   return "target_label"
         if col in TARGET_COLS:                    return "target_raw"
         if col in POSTLAUNCH_COLS:                return "outcome_postlaunch"
         if col.startswith("ts_"):                 return "timeseries_postlaunch"
@@ -180,7 +192,7 @@ def build():
 
     # ── Reporte de calidad ────────────────────────────────────────────────
     feats = dictionary[dictionary["use_as_feature"]]["column"].tolist()
-    balance = df["label"].value_counts(normalize=True).round(3).to_dict()
+    balance = df["label_name"].value_counts(normalize=True).round(3).to_dict()
     print("\n" + "=" * 60)
     print("  DATASET ML CONSTRUIDO")
     print("=" * 60)
@@ -188,7 +200,7 @@ def build():
     print(f"  Columnas totales:         {len(df.columns)}")
     print(f"  Features usables:         {len(feats)}  "
           f"({sum(c.startswith('tag_') or c.startswith('genre_') or c.startswith('cat_') for c in feats)} tags/géneros/cats)")
-    print(f"  Balance label (éxito>20k):{balance}")
+    print(f"  Clases (Flop<200k/Rentable/Hit>=1M): {balance}")
     print(f"  Columnas casi-constantes: {len(near_const)} -> {near_const}")
     print(f"  Nulos en el master:       {int(df.isnull().sum().sum())}")
     print(f"\n  -> {master_path}")

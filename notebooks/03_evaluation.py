@@ -62,45 +62,45 @@ pipe = Pipeline([("pre", pre),
 
 grid = GridSearchCV(
     pipe,
-    param_grid={"clf__C": [0.1, 1.0, 10.0],
-                "clf__penalty": ["l2"]},
-    scoring="roc_auc", cv=3, n_jobs=-1)
+    param_grid={"clf__C": [0.1, 1.0, 10.0]},
+    scoring="roc_auc_ovr", cv=3, n_jobs=-1)   # OVR para multiclase
 grid.fit(X_train, y_train)
 best = grid.best_estimator_
-print(f"Mejor C: {grid.best_params_['clf__C']}  |  AUC CV: {grid.best_score_:.4f}")
+print(f"Mejor C: {grid.best_params_['clf__C']}  |  AUC CV (ovr): {grid.best_score_:.4f}")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 3. Métricas en test + registro en MLflow
+# MAGIC ## 3. Métricas multiclase en test + registro en MLflow
 
 # COMMAND ----------
 
 import mlflow
 
-proba = best.predict_proba(X_test)[:, 1]
+proba = best.predict_proba(X_test)            # [n, 3]
 pred = best.predict(X_test)
-auc = roc_auc_score(y_test, proba)
-f1 = f1_score(y_test, pred)
+auc = roc_auc_score(y_test, proba, multi_class="ovr", average="macro")
+f1 = f1_score(y_test, pred, average="macro")
 acc = accuracy_score(y_test, pred)
 
-with mlflow.start_run(run_name="lr_cv_sklearn"):
+with mlflow.start_run(run_name="lr_cv_multiclase"):
     mlflow.log_param("best_C", grid.best_params_["clf__C"])
-    mlflow.log_metrics({"auc": float(auc), "f1": float(f1), "accuracy": float(acc)})
+    mlflow.log_metrics({"auc_ovr_macro": float(auc), "f1_macro": float(f1), "accuracy": float(acc)})
 
-print(f"AUC={auc:.4f}  F1={f1:.4f}  Accuracy={acc:.4f}")
+print(f"AUC(ovr-macro)={auc:.4f}  F1(macro)={f1:.4f}  Accuracy={acc:.4f}")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 4. Matriz de confusión (clave con clases desbalanceadas)
+# MAGIC ## 4. Matriz de confusión 3×3 + reporte por clase
 
 # COMMAND ----------
 
-cm = confusion_matrix(y_test, pred)
-tn, fp, fn, tp = cm.ravel()
-print(f"            Pred 0   Pred 1")
-print(f"  Real 0    {tn:>6}   {fp:>6}")
-print(f"  Real 1    {fn:>6}   {tp:>6}")
+CLASS_NAMES = ["Flop", "Rentable", "Hit"]
+cm = confusion_matrix(y_test, pred, labels=[0, 1, 2])
+print("Matriz de confusión (filas=real, columnas=predicho):")
+print(f"{'':>12}" + "".join(f"{n:>10}" for n in CLASS_NAMES))
+for i, n in enumerate(CLASS_NAMES):
+    print(f"{n:>12}" + "".join(f"{cm[i, j]:>10}" for j in range(3)))
 print()
-print(classification_report(y_test, pred, target_names=["Fracaso", "Éxito"]))
+print(classification_report(y_test, pred, labels=[0, 1, 2], target_names=CLASS_NAMES))

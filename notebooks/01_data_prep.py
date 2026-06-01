@@ -28,7 +28,10 @@ SOURCE_TABLE = f"{CATALOG}.{SCHEMA}.dataset_ml"            # tabla creada al sub
 SILVER_TABLE = f"{CATALOG}.{SCHEMA}.features_silver"       # salida: dataset limpio
 CATALOG_TABLE = f"{CATALOG}.{SCHEMA}.feature_columns"      # salida: catálogo de features
 
-SUCCESS_THRESHOLD = 20000  # por si la tabla no trajera 'label' ya calculada
+# Etiqueta multiclase (Doc. Técnico §4.1, Softmax): 0=Flop, 1=Rentable, 2=Hit.
+# Cortes en owners_lower_bound (solo se usan si la tabla no trajera 'label' ya calculada).
+FLOP_MAX_OWNERS = 200000
+HIT_MIN_OWNERS  = 1000000
 
 # COMMAND ----------
 
@@ -44,15 +47,20 @@ print(f"{SOURCE_TABLE}: {df.count():,} filas, {len(df.columns)} columnas")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 1. Garantizar la etiqueta `label`
+# MAGIC ## 1. Garantizar la etiqueta multiclase `label` (0=Flop, 1=Rentable, 2=Hit)
 # MAGIC `build_dataset.py` ya la crea; este bloque la reconstruye solo si falta.
 
 # COMMAND ----------
 
 if "label" not in df.columns:
-    df = df.withColumn("label", (F.col("owners_lower_bound") > SUCCESS_THRESHOLD).cast(IntegerType()))
+    df = df.withColumn(
+        "label",
+        F.when(F.col("owners_lower_bound") >= HIT_MIN_OWNERS, F.lit(2))
+         .when(F.col("owners_lower_bound") >= FLOP_MAX_OWNERS, F.lit(1))
+         .otherwise(F.lit(0)).cast(IntegerType()))
 
-display(df.groupBy("label").count())
+# Distribución de clases (0=Flop, 1=Rentable, 2=Hit)
+display(df.groupBy("label").count().orderBy("label"))
 
 # COMMAND ----------
 
