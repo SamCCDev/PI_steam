@@ -21,6 +21,6 @@ output/*.log
 output copy_may22/
 output copymay24/
 output_copy_mayo8bk/
-
+output copy_may27/
 # Checkpoint files (duplicates of the final CSVs)
 output/*_checkpoint.csv

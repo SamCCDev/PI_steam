@@ -149,6 +149,7 @@ Debido a la diferente cardinalidad de los datos (1 juego tiene N reseñas o N ta
 | platform\_mac | Boolean | Steam API | Compatibilidad con OS macOS. |
 | platform\_linux | Boolean | Steam API | Compatibilidad con OS Linux / SteamOS. |
 | min\_ram\_gb | Float | Steam API (Regex) | Requisito mínimo de memoria RAM extraído del texto de requisitos. |
+| metacritic\_score | Integer | Steam API | Puntuación de Metacritic (0–100). 0 indica que el juego no tiene puntuación de Metacritic. |
 
 ### **6.3. Variables de Diseño y Mecánicas (games\_tags.csv)**
 
@@ -223,9 +224,43 @@ El script de extracción de datos (`steam_etl.py`) está diseñado para instalar
   ```
 
 ### **7.1. Optimización y Control de Concurrencia (Producción)**
-Para acelerar la extracción de 5,000 juegos y evitar el bloqueo por parte de Steam (errores `429 Too Many Requests`), el script incorpora un motor de red concurrente de alto rendimiento:
-* **Multithreading Cooperativo:** Uso de `ThreadPoolExecutor` con 5 hilos de ejecución concurrente para procesar descargas en paralelo.
-* **Controladores de Tasa Globales (`GlobalRateLimiter`):** Una cola coordinada entre hilos que garantiza un intervalo mínimo de 1.8 segundos entre peticiones al Storefront de Steam, evitando colisiones de IP.
-* **Filtros de Carga (Payload Optimization):** El script pasa el parámetro `filters=basic,price_overview,genres,categories,achievements` para eliminar un 90% del tamaño de la respuesta (imágenes y videos HD), reduciendo el ancho de banda y latencia.
+Para acelerar la extracción y evitar el bloqueo por parte de Steam (errores `429 Too Many Requests`), el script incorpora un motor de red concurrente de alto rendimiento con las siguientes capas de optimización:
+
+* **Sesiones HTTP Persistentes (Thread-Local `requests.Session`):** Cada hilo mantiene su propia sesión HTTP con `HTTPAdapter` configurado con pool de conexiones (10 conn/host). Esto reutiliza conexiones TCP abiertas (HTTP keep-alive), eliminando el overhead de handshake TCP/TLS repetido (~200ms de ahorro por request).
+* **Multithreading Cooperativo (5 hilos):** Uso de `ThreadPoolExecutor` con 5 hilos de ejecución concurrente. Adicionalmente, dentro de cada juego se paraleliza la extracción de SteamSpy y Reviews (Fase B paralela) usando un mini-pool de 2 hilos.
+* **Controladores de Tasa Globales Calibrados (`GlobalRateLimiter`):** Tasas ajustadas a los límites documentados de cada API con márgenes de seguridad:
+  * *Steam Storefront:* 0.63 req/s (~1.59s entre llamadas). Límite real: ~0.67 req/s (200 req/5min). Margen: 5%.
+  * *SteamSpy:* 1.0 req/s. Documentado: 1 req/s.
+  * *Steam Reviews:* 5.0 req/s (~0.2s entre llamadas). Límite real: ~10 req/s. Margen: 50%.
+* **Caché Bulk de SteamSpy (`SteamSpyBulkCache`):** Pre-carga los datos del catálogo completo de SteamSpy (desde `request=all`) en memoria al inicio del pipeline. Esto elimina la necesidad de hacer llamadas individuales a SteamSpy por juego, ahorrando ~1s de latencia por cada juego procesado.
+* **Respuestas Sin Filtro (Payload Completo):** Se descarga la respuesta completa de `appdetails` (~20KB/juego) en lugar de usar el parámetro `filters`, ya que el filtro `basic` de Steam excluye campos críticos para ML como `developers`, `publishers`, `platforms` y `release_date`. El cuello de botella es el rate limiter (1.59s/req), no el ancho de banda.
 * **Emulación de Navegador (User-Agent Chrome):** Peticiones firmadas con headers reales para evitar bloqueos automatizados contra clientes scripts por defecto.
 * **Auto-Pausa en 429:** En caso de detectar un error 429, todos los hilos se pausan inmediatamente de forma síncrona por 60 segundos por intento para evitar que la IP sea bloqueada de forma prolongada.
+
+### **7.2. Modo Quality Filter (Dataset de Alta Calidad)**
+
+El principal problema del catálogo aleatorio de Steam es que ~90% de los appids corresponden a juegos con cero o muy pocos owners registrados en SteamSpy, lo que produce un dataset con variables objetivo mayoritariamente vacías (ruido sin señal).
+
+**Solución — Pre-filtrado via SteamSpy:**
+
+El modo `--quality-filter` resuelve esto descargando primero el catálogo completo de SteamSpy (que ya incluye `owners`, `positive` y `negative` para cada juego) y **filtrando antes de hacer ninguna llamada al Storefront de Steam**.
+
+Solo se procesan juegos que cumplen simultáneamente:
+1. `owners_lower_bound >= 10,000` (configurable con `--min-owners`).
+2. `positive + negative >= 10` (configurable con `--min-reviews`).
+
+**Impacto estimado:** De ~100,000 juegos en Steam, ~8,000–15,000 pasan el filtro. El 100% de esos juegos tendrá `owners_lower_bound` poblado (vs ~10% en el modo aleatorio).
+
+**Comandos:**
+```bash
+# Extrae todos los juegos que cumplen el filtro de calidad (proceso largo)
+python steam_etl.py --quality-filter
+
+# Solo procesa una muestra de 2000 juegos de calidad (recomendado para inicio)
+python steam_etl.py --quality-filter --sample 2000
+
+# Ajusta los umbrales mínimos según el nivel de calidad deseado
+python steam_etl.py --quality-filter --min-owners 50000 --min-reviews 50
+```
+
+> **Nota técnica:** El paso de descarga del catálogo SteamSpy (paginado) tarda ~43 minutos (una página por minuto por rate limit). Es un proceso de una sola vez; las ejecuciones posteriores son incrementales y solo procesan juegos nuevos.
