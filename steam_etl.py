@@ -212,15 +212,28 @@ def safe_get(url: str, params: dict = None, retries: int = MAX_RETRIES) -> dict 
 # OBTENCIÓN DE APPIDS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_all_appids(sample_size: int = None) -> list[int]:
+# Tope duro de páginas de SteamSpy para no iterar al vacío.
+# SteamSpy ordena por owners desc; tras ~40 págs los owners ya son 0.
+MAX_STEAMSPY_PAGES = 60
+
+def get_all_appids(sample_size: int = None, source: str = "auto") -> list[int]:
     """
-    Obtiene todos los appids probando 2 fuentes:
-      1. IStoreService/GetAppList (endpoint oficial vigente, requiere key, paginado)
-      2. SteamSpy /all paginado (fallback sin key, 1.000/pág, 1 req/min)
+    Obtiene los appids del catálogo.
+
+    source:
+      - "auto"     : IStoreService si hay API key, si no SteamSpy (comportamiento previo).
+      - "steamspy" : fuerza SteamSpy /all (juegos ordenados por owners desc). Recomendado
+                     cuando se buscan MÁS juegos con datos de ventas reales (owners>0),
+                     ya que IStoreService devuelve ~250k apps mayormente sin owners.
+
+    Para SteamSpy se aplica early-stop: se detiene en cuanto una página no aporta
+    juegos con owners>0 (cola de ceros), evitando paginar hasta el infinito.
     """
 
+    use_store = (source == "auto" and STEAM_API_KEY and STEAM_API_KEY != "PEGA_TU_KEY_AQUI")
+
     # ── FUENTE 1: IStoreService (endpoint oficial actual) ─────────────────
-    if STEAM_API_KEY and STEAM_API_KEY != "PEGA_TU_KEY_AQUI":
+    if use_store:
         log.info("Descargando catálogo desde IStoreService/GetAppList (oficial)...")
         appids = []
         last_appid = 0  # cursor de paginación que usa Steam
@@ -268,18 +281,18 @@ def get_all_appids(sample_size: int = None) -> list[int]:
                 log.info(f"  → Modo prueba (muestra aleatoria): {len(appids)} appids.")
             return appids
 
-    # ── FUENTE 2: SteamSpy paginado (fallback sin key) ────────────────────
+    # ── FUENTE 2: SteamSpy paginado (ordenado por owners desc) ────────────
     log.info("Descargando catálogo desde SteamSpy (paginado, 1.000/pág, 1 req/min)...")
-    appids = []
+    appids = []          # se llena en orden de owners desc (los más vendidos primero)
     page   = 0
 
-    # Si sample_size es pequeño, no necesitamos traer las 43 páginas
-    max_pages = None
+    # Si sample_size es pequeño, no necesitamos traer todas las páginas
+    max_pages = MAX_STEAMSPY_PAGES
     if sample_size:
         import math
-        max_pages = math.ceil(sample_size / 1000) + 1  # solo las páginas necesarias
+        max_pages = min(max_pages, math.ceil(sample_size / 1000) + 1)
 
-    while True:
+    while page < max_pages:
         data = safe_get(
             "https://steamspy.com/api.php",
             params={"request": "all", "page": page}
@@ -289,13 +302,28 @@ def get_all_appids(sample_size: int = None) -> list[int]:
             log.info(f"  SteamSpy: página {page} vacía → fin del catálogo.")
             break
 
-        appids.extend(int(appid) for appid in data.keys())
+        # Contar cuántos juegos de esta página tienen owners>0
+        page_appids = []
+        with_owners = 0
+        for appid, info in data.items():
+            page_appids.append(int(appid))
+            if parse_owners_lower_bound(info.get("owners", "")) > 0:
+                with_owners += 1
+
+        appids.extend(page_appids)
         log.info(f"  SteamSpy: página {page} → {len(data)} juegos "
-                 f"(total: {len(appids):,})")
+                 f"({with_owners} con owners>0, total: {len(appids):,})")
+
+        # EARLY-STOP: si la página ya no trae juegos con owners>0, llegamos a la
+        # cola de ceros. No tiene sentido seguir paginando (esto evita el bug
+        # previo de iterar hasta la página 1000 sobre páginas vacías/sin datos).
+        if with_owners == 0:
+            log.info(f"  SteamSpy: página {page} sin owners>0 → early-stop.")
+            break
 
         page += 1
 
-        if max_pages and page >= max_pages:
+        if page >= max_pages:
             log.info(f"  SteamSpy: límite de {max_pages} páginas alcanzado.")
             break
 
@@ -306,7 +334,8 @@ def get_all_appids(sample_size: int = None) -> list[int]:
     if appids:
         if sample_size:
             appids = appids[:sample_size]
-        log.info(f"✓ Catálogo SteamSpy: {len(appids):,} appids obtenidos.")
+        log.info(f"✓ Catálogo SteamSpy: {len(appids):,} appids obtenidos "
+                 f"(ordenados por owners desc).")
         return appids
 
     raise RuntimeError(
@@ -564,7 +593,13 @@ def build_metadata_row(appid: int, steam: dict, spy: dict) -> dict:
         "rating_porcentaje":   rating_pct,
         "positive":            positive,
         "negative":            negative,
-        # Proxy de Wishlists (hub followers vía SteamSpy)
+        # Proxy de Wishlists (hub followers).
+        # ADVERTENCIA: SteamSpy NO expone seguidores del hub. 'userscore' es un
+        # score 0-100 deprecado (≈99.98% en cero), por lo que esta columna es casi
+        # constante y NO debe usarse como feature tal cual. Para obtener los
+        # seguidores reales hay que scrapear https://steamcommunity.com/games/{appid}
+        # (pendiente). Los notebooks de ML descartan esta columna automáticamente
+        # por baja varianza hasta que se corrija la fuente.
         "hub_followers":       safe_int(spy.get("userscore", 0)) if (spy and isinstance(spy, dict)) else 0,
         # Características del producto
         "total_achievements":  safe_int(steam.get("achievements", {}).get("total", 0)),
@@ -694,13 +729,15 @@ def process_single_game(appid: int) -> dict | None:
         return None
 
 
-def run_pipeline(sample_size: int = None):
+def run_pipeline(sample_size: int = None, source: str = "auto"):
     """
     Orquesta la extracción completa de forma incremental y concurrente:
       1. Lee los CSVs existentes (si existen) para operar de forma incremental.
       2. Obtiene los appids del catálogo de Steam que NO han sido procesados.
-      3. Selecciona una muestra aleatoria de los nuevos juegos (si se indica sample_size).
-      4. Extrae datos usando multihilo (3 hilos) y guarda progresivamente.
+      3. Selecciona los juegos a procesar (si source="steamspy", preserva el orden
+         por owners desc para extraer primero los juegos con datos de ventas reales;
+         en otro caso toma una muestra aleatoria reproducible).
+      4. Extrae datos usando multihilo (5 hilos) y guarda progresivamente.
     """
     metadata_path = OUTPUT_DIR / "games_metadata.csv"
     tags_path = OUTPUT_DIR / "games_tags.csv"
@@ -740,10 +777,10 @@ def run_pipeline(sample_size: int = None):
                 log.warning(f"No se pudo leer {ts_path.name}, se creará desde cero.")
 
     # Obtener catálogo de Steam
-    log.info("Obteniendo catálogo completo de Steam...")
-    all_appids = get_all_appids(sample_size=None)
-    
-    # Filtrar procesados
+    log.info(f"Obteniendo catálogo de Steam (source={source})...")
+    all_appids = get_all_appids(sample_size=None, source=source)
+
+    # Filtrar procesados PRESERVANDO el orden del catálogo (owners desc en SteamSpy)
     unprocessed_appids = [aid for aid in all_appids if aid not in existing_appids]
     log.info(f"Juegos sin extraer en el catálogo de Steam: {len(unprocessed_appids):,}")
 
@@ -751,12 +788,16 @@ def run_pipeline(sample_size: int = None):
         log.info("✓ Todos los juegos del catálogo ya han sido extraídos. Nada por hacer.")
         return
 
-    # Seleccionar la muestra aleatoria de los no procesados si se especificó sample_size
     if sample_size:
-        import random
-        random.seed(42)
-        appids_to_process = random.sample(unprocessed_appids, min(sample_size, len(unprocessed_appids)))
-        log.info(f"Seleccionando muestra aleatoria de {len(appids_to_process):,} juegos nuevos para procesar.")
+        if source == "steamspy":
+            # Conservar el orden por owners desc: tomar los primeros N (más vendidos).
+            appids_to_process = unprocessed_appids[:sample_size]
+            log.info(f"Tomando los {len(appids_to_process):,} juegos nuevos con más owners (orden SteamSpy).")
+        else:
+            import random
+            random.seed(42)
+            appids_to_process = random.sample(unprocessed_appids, min(sample_size, len(unprocessed_appids)))
+            log.info(f"Seleccionando muestra aleatoria de {len(appids_to_process):,} juegos nuevos para procesar.")
     else:
         appids_to_process = unprocessed_appids
 
@@ -1057,7 +1098,7 @@ def validate_single_appid(appid: int):
     if spy:
         tags_data = spy.get("tags")
         spy_tags_list = list(tags_data.keys()) if isinstance(tags_data, dict) else list(tags_data) if isinstance(tags_data, list) else []
-        log.info(f"SteamSpy OK → owners: {spy.get('owners_lower_bound')}, "
+        log.info(f"SteamSpy OK → owners: {spy.get('owners')}, "
                  f"tags: {spy_tags_list[:5]}...")
     else:
         log.warning("SteamSpy → sin datos.")
@@ -1113,6 +1154,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Extrae únicamente las series de tiempo para los appids ya existentes en games_metadata.csv.",
     )
+    parser.add_argument(
+        "--source",
+        choices=["auto", "steamspy"],
+        default="auto",
+        help="Fuente del catálogo. 'steamspy' prioriza juegos con owners>0 "
+             "(ordenados por ventas desc). 'auto' usa IStoreService si hay API key.",
+    )
     args = parser.parse_args()
 
     if args.validate:
@@ -1124,4 +1172,4 @@ if __name__ == "__main__":
     else:
         # Modo producción / prueba
         sample = None if args.sample == 0 else args.sample
-        run_pipeline(sample_size=sample)
+        run_pipeline(sample_size=sample, source=args.source)

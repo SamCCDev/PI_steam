@@ -24,3 +24,8 @@ output_copy_mayo8bk/
 
 # Checkpoint files (duplicates of the final CSVs)
 output/*_checkpoint.csv
+
+# Material de clase y respaldos personales (no publicar en repo)
+VIDEO_GAMES_/
+VIDEO_GAMES_.docx
+Replicacion_Ejemplo_16_1.Rmd
