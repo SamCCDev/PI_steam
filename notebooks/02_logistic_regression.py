@@ -24,10 +24,16 @@ COEF_TABLE    = f"{CATALOG}.{SCHEMA}.model_lr_coefficients"
 # COMMAND ----------
 
 import numpy as np, pandas as pd
+import mlflow
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+
+# Free Edition activa el autologging de MLflow por defecto y, al hacer .fit() de un
+# modelo MULTICLASE, intenta calcular roc_auc sin multi_class='ovr' -> ValueError.
+# Lo desactivamos antes de entrenar (este notebook no necesita MLflow).
+mlflow.autolog(disable=True)
 
 # Traer a pandas (dataset pequeño -> cabe en el driver)
 pdf = spark.table(SILVER_TABLE).toPandas()

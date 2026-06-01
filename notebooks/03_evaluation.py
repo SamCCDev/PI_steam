@@ -18,12 +18,18 @@ SEED = 42
 # COMMAND ----------
 
 import numpy as np, pandas as pd
+import mlflow
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_matrix, classification_report
+
+# Free Edition activa el autologging de MLflow por defecto, y al hacer .fit() de un
+# modelo MULTICLASE intenta calcular roc_auc sin multi_class='ovr' -> ValueError.
+# Lo desactivamos porque hacemos logging manual de las métricas más abajo.
+mlflow.autolog(disable=True)
 
 pdf = spark.table(SILVER_TABLE).toPandas()
 cat = spark.table(CATALOG_TABLE).toPandas()
@@ -74,8 +80,6 @@ print(f"Mejor C: {grid.best_params_['clf__C']}  |  AUC CV (ovr): {grid.best_scor
 # MAGIC ## 3. Métricas multiclase en test + registro en MLflow
 
 # COMMAND ----------
-
-import mlflow
 
 proba = best.predict_proba(X_test)            # [n, 3]
 pred = best.predict(X_test)

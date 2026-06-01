@@ -19,12 +19,16 @@ SEED = 42
 # COMMAND ----------
 
 import numpy as np, pandas as pd
+import mlflow
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_matrix, classification_report
+
+# Desactivar autolog antes de entrenar (falla calculando roc_auc multiclase en .fit()).
+mlflow.autolog(disable=True)
 
 pdf = spark.table(SILVER_TABLE).toPandas()
 cat = spark.table(CATALOG_TABLE).toPandas()
@@ -62,8 +66,6 @@ print("SVM-RBF entrenado.")
 # MAGIC ## 2. Evaluación + MLflow
 
 # COMMAND ----------
-
-import mlflow
 
 CLASS_NAMES = ["Flop", "Rentable", "Hit"]
 proba = svm.predict_proba(X_test)            # [n, 3]
