@@ -18,7 +18,6 @@ SEED = 42
 # COMMAND ----------
 
 import numpy as np, pandas as pd
-import mlflow
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
@@ -26,10 +25,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_matrix, classification_report
 
-# Free Edition activa el autologging de MLflow por defecto, y al hacer .fit() de un
-# modelo MULTICLASE intenta calcular roc_auc sin multi_class='ovr' -> ValueError.
-# Lo desactivamos porque hacemos logging manual de las métricas más abajo.
-mlflow.autolog(disable=True)
+# Free Edition activa el autologging de MLflow por defecto y, al hacer .fit() de un
+# modelo MULTICLASE, intenta calcular roc_auc sin multi_class='ovr' -> ValueError.
+# Lo desactivamos. (Además NO usamos el tracking de MLflow: start_run() falla en
+# serverless con CONFIG_NOT_AVAILABLE spark.mlflow.modelRegistryUri.)
+try:
+    import mlflow
+    mlflow.autolog(disable=True)
+except Exception:
+    pass
 
 pdf = spark.table(SILVER_TABLE).toPandas()
 cat = spark.table(CATALOG_TABLE).toPandas()
@@ -77,7 +81,7 @@ print(f"Mejor C: {grid.best_params_['clf__C']}  |  AUC CV (ovr): {grid.best_scor
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 3. Métricas multiclase en test + registro en MLflow
+# MAGIC ## 3. Métricas multiclase en test
 
 # COMMAND ----------
 
@@ -86,11 +90,6 @@ pred = best.predict(X_test)
 auc = roc_auc_score(y_test, proba, multi_class="ovr", average="macro")
 f1 = f1_score(y_test, pred, average="macro")
 acc = accuracy_score(y_test, pred)
-
-with mlflow.start_run(run_name="lr_cv_multiclase"):
-    mlflow.log_param("best_C", grid.best_params_["clf__C"])
-    mlflow.log_metrics({"auc_ovr_macro": float(auc), "f1_macro": float(f1), "accuracy": float(acc)})
-
 print(f"AUC(ovr-macro)={auc:.4f}  F1(macro)={f1:.4f}  Accuracy={acc:.4f}")
 
 # COMMAND ----------

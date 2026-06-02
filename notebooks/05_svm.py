@@ -19,7 +19,6 @@ SEED = 42
 # COMMAND ----------
 
 import numpy as np, pandas as pd
-import mlflow
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.svm import SVC
@@ -28,7 +27,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_matrix, classification_report
 
 # Desactivar autolog antes de entrenar (falla calculando roc_auc multiclase en .fit()).
-mlflow.autolog(disable=True)
+try:
+    import mlflow
+    mlflow.autolog(disable=True)
+except Exception:
+    pass
 
 pdf = spark.table(SILVER_TABLE).toPandas()
 cat = spark.table(CATALOG_TABLE).toPandas()
@@ -63,7 +66,7 @@ print("SVM-RBF entrenado.")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. Evaluación + MLflow
+# MAGIC ## 2. Evaluación
 
 # COMMAND ----------
 
@@ -73,11 +76,6 @@ pred = svm.predict(X_test)
 auc = roc_auc_score(y_test, proba, multi_class="ovr", average="macro")
 f1 = f1_score(y_test, pred, average="macro")
 acc = accuracy_score(y_test, pred)
-
-with mlflow.start_run(run_name="svm_rbf"):
-    mlflow.log_params({"kernel": "rbf", "C": 1.0, "gamma": "scale"})
-    mlflow.log_metrics({"auc_ovr_macro": float(auc), "f1_macro": float(f1), "accuracy": float(acc)})
-
 print(f"SVM-RBF -> AUC(ovr-macro)={auc:.4f}  F1(macro)={f1:.4f}  Accuracy={acc:.4f}\n")
 cm = confusion_matrix(y_test, pred, labels=[0, 1, 2])
 print(f"{'':>12}" + "".join(f"{n:>10}" for n in CLASS_NAMES))
