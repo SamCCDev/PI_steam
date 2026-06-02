@@ -207,6 +207,10 @@ Los tres modelos separan bien las 3 clases (Flop y Hit casi nunca se confunden e
 
 [`steampredict_dashboard_comercial.html`](steampredict_dashboard_comercial.html) es un simulador interactivo que corre **en el navegador, sin servidor** (se abre con doble clic). Embebe el modelo entrenado y calcula la predicción de 3 clases (Flop/Rentable/Hit) en JavaScript — el softmax reproduce exactamente `sklearn.predict_proba`.
 
+**Publicado en GitHub Pages** (accesible para todo el equipo): **https://samccdev.github.io/PI_steam/** (`index.html` redirige al dashboard).
+
+**100% offline / sin CDNs:** Tailwind y los iconos (lucide) están **vendoreados** en [`vendor/`](vendor/) y el modelo va inline, así que el dashboard se ve y funciona aunque la red bloquee recursos externos (p. ej. Fortinet). No depende de internet salvo para abrir la URL de Pages.
+
 **Regenerar el dashboard tras reentrenar:**
 
 ```bash
