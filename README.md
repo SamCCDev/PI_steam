@@ -201,6 +201,24 @@ Los tres modelos separan bien las 3 clases (Flop y Hit casi nunca se confunden e
 
 > **Nota sobre el dataset:** al ampliar con los juegos más vendidos de SteamSpy, el dataset quedó sesgado a títulos exitosos. Por eso el "éxito" se modela en 3 niveles (en vez de un umbral binario de 20k, que dejaba 85% en una sola clase) y se usa `class_weight="balanced"` + métricas macro.
 
+---
+
+## 🎮 Dashboard Comercial (HTML standalone)
+
+[`steampredict_dashboard_comercial.html`](steampredict_dashboard_comercial.html) es un simulador interactivo que corre **en el navegador, sin servidor** (se abre con doble clic). Embebe el modelo entrenado y calcula la predicción de 3 clases (Flop/Rentable/Hit) en JavaScript — el softmax reproduce exactamente `sklearn.predict_proba`.
+
+**Regenerar el dashboard tras reentrenar:**
+
+```bash
+python build_dataset.py          # 1. master ML-ready (si cambiaron los CSV)
+python export_model_web.py       # 2. entrena y exporta output/model_web.json (+ sanity check vs sklearn)
+python embed_model_in_html.py    # 3. inyecta el JSON dentro del HTML
+```
+
+* **Entradas:** precio, experiencia del estudio, longitud de la descripción (NLP), tags/géneros, plataformas.
+* **Salidas:** probabilidad de éxito comercial (no-flop), P(Hit), pronóstico de clase, ventas/wishlists estimadas e **insights de explicabilidad derivados de los coeficientes reales** del modelo.
+* **Nota:** `hub_followers` (seguidores) alimenta solo la estimación de wishlists/ventas, no el modelo (la columna quedó casi-constante en el ETL). `kickstarter` no entra al modelo (no se extrajo `games_external`).
+
 ### Limitaciones a tener en cuenta
 
 * **Serverless (Spark Connect) bloquea la MLlib clásica de PySpark.** `StringIndexer`, `LogisticRegression` y demás estimadores de `pyspark.ml` lanzan `Py4JSecurityException: not whitelisted`. Por eso el modelado se hace con **scikit-learn** sobre los datos en pandas (`spark.table(...).toPandas()`), válido por el tamaño del dataset (~3k filas) y previsto en el Doc. Técnico §4.3.
