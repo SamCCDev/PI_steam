@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SteamPredict v2 — Predictor Comercial de Videojuegos</title>
+  <script src="/vendor/tailwind.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        steam: {
+          bg: '#171a21', surface: '#1b2838', surface2: '#16202d',
+          border: '#2a475e', accent: '#66c0f4', accentd: '#417a9b',
+          text: '#c7d5e0', muted: '#8f98a0',
+          flop: '#c75450', rentable: '#66c0f4', hit: '#a4d007'
+        }
+      }, fontFamily: { sans: ['Motiva Sans', 'system-ui', 'Segoe UI', 'sans-serif'] } } }
+    }
+  </script>
+  <script src="/vendor/lucide.js"></script>
+  <script src="/vendor/echarts.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-steam-bg text-steam-text font-sans min-h-screen">
+
+  <!-- Barra superior -->
+  <header class="h-14 flex items-center justify-between px-5 bg-steam-surface2 border-b border-steam-border sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <i data-lucide="gamepad-2" class="text-steam-accent"></i>
+      <span class="font-semibold tracking-wide">Steam<span class="text-steam-accent">Predict</span> <span class="text-xs text-steam-muted align-top">v2</span></span>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <input id="game-search" type="text" placeholder="Cargar juego real…" autocomplete="off"
+               class="w-52 bg-steam-bg border border-steam-border rounded px-3 py-1.5 text-sm focus:border-steam-accent outline-none">
+        <div id="game-results" class="absolute mt-1 w-full bg-steam-surface border border-steam-border rounded shadow-lg hidden max-h-64 overflow-auto z-40"></div>
+      </div>
+      <div class="flex items-center gap-1 text-xs bg-steam-bg rounded p-0.5 border border-steam-border">
+        <button data-mode="presentacion" class="mode-btn px-2.5 py-1 rounded">Presentación</button>
+        <button data-mode="quick" class="mode-btn px-2.5 py-1 rounded">Quick</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Navegación lateral -->
+    <nav class="w-56 shrink-0 bg-steam-surface2 border-r border-steam-border min-h-[calc(100vh-3.5rem)] p-3 space-y-1">
+      <button data-tab="simulador"      class="nav-btn"><i data-lucide="sliders-horizontal"></i> Simulador</button>
+      <button data-tab="comparacion"    class="nav-btn"><i data-lucide="git-compare"></i> Comparar modelos</button>
+      <button data-tab="similares"      class="nav-btn"><i data-lucide="users"></i> Juegos similares</button>
+      <button data-tab="recomendaciones" class="nav-btn"><i data-lucide="lightbulb"></i> Recomendaciones</button>
+      <button data-tab="panel"          class="nav-btn"><i data-lucide="bar-chart-3"></i> Panel analítico</button>
+      <div class="pt-4 mt-4 border-t border-steam-border text-[11px] text-steam-muted leading-relaxed px-1">
+        <p id="nav-meta">Cargando modelos…</p>
+      </div>
+    </nav>
+
+    <!-- Contenido -->
+    <main class="flex-1 p-5">
+      <div id="layout" class="grid gap-5" style="grid-template-columns: 380px 1fr;">
+
+        <!-- Panel de entrada (constructor del juego) -->
+        <aside id="input-panel" class="bg-steam-surface border border-steam-border rounded-lg p-4 h-fit sticky top-[4.5rem]">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold flex items-center gap-2"><i data-lucide="wrench" class="w-4 h-4 text-steam-accent"></i> Tu videojuego</h2>
+            <button id="reset-btn" class="text-xs text-steam-muted hover:text-steam-accent">Reiniciar</button>
+          </div>
+          <div id="form" class="space-y-4 max-h-[calc(100vh-12rem)] overflow-auto pr-1"></div>
+        </aside>
+
+        <!-- Resultados por pestaña -->
+        <section id="content" class="min-w-0"></section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Overlay de carga -->
+  <div id="overlay" class="fixed inset-0 bg-steam-bg/70 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="text-center">
+      <i data-lucide="loader-circle" class="w-8 h-8 text-steam-accent animate-spin mx-auto"></i>
+      <p class="text-sm text-steam-muted mt-2">Calculando…</p>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/charts.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

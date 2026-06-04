@@ -326,15 +326,15 @@ Nada de v1 se modifica ni se borra.
 - [x] Validación manual + defaults desde `feature_schema.json`. Sirve estáticos de `web/` y `/vendor/`.
 - [x] Verificado por HTTP (arranque, GET y POST). Búsqueda OK (`portal` → Portal/Portal 2/Portal Knights).
 
-### Fase 2 — Frontend base (estética Steam)
-- [ ] Layout + paleta Steam + vendorizar ECharts.
-- [ ] Página Simulador con incertidumbre.
-- [ ] Página Comparación de modelos.
+### Fase 2 — Frontend base (estética Steam)  ✅ COMPLETA (2026-06-03, falta QA visual)
+- [x] Layout SPA + paleta Steam (`web/index.html`, `web/css/app.css`) + ECharts vendorizado.
+- [x] Página Simulador con incertidumbre + selector de modelo + KPIs.
+- [x] Página Comparación de modelos (barras agrupadas + tabla con AUC/F1/acc).
 
-### Fase 3 — Páginas ricas
-- [ ] Página Juegos del mismo camino (+ modo validación con juego real).
-- [ ] Página Análisis & Recomendaciones.
-- [ ] Página Panel analítico (Power BI con ECharts).
+### Fase 3 — Páginas ricas  ✅ COMPLETA (2026-06-03, falta QA visual)
+- [x] Página Juegos del mismo camino + modo validación (cargar juego real → predicción vs realidad).
+- [x] Página Análisis & Recomendaciones (paquete beam search + cambios individuales).
+- [x] Página Panel analítico: donut de mercado, histograma de precios, owners por género, importancia LR, scatter precio/owners, matriz de confusión, tabla de desempeño.
 
 ### Fase 4 — Modos + pulido
 - [ ] Modo presentación (guiado, ejemplos precargados).
@@ -388,7 +388,9 @@ Nada de v1 se modifica ni se borra.
 - 2026-06-03 — Apartado de ingeniería de datos creado y verificado: anonimización SHA-256 (developer/publisher) + análisis Spark RDD para Databricks + verificación local con pandas. Archivos de referencia del curso movidos a `referencia/`. — `ingenieria_datos/`
 - 2026-06-03 — **Fase 0 COMPLETA**: `build_dataset_v2.py` (7.817 juegos, 92 features, 9 nuevas, 0 nulos) + `train_models.py` (LR/SVM/MLP/owners-reg/NN + Bayes LOO). Test: MLP AUC 0.888 / F1 0.74 / acc 0.77. Artefactos cargan y predicen OK. — `models/`, `reports/`
 - 2026-06-03 — **Fase 1 COMPLETA**: backend stdlib (`app/server.py` + `inference.py` + `stats.py`). Endpoints predict/recommend/similar/stats/games/config verificados por HTTP. Recomendador beam search sube P(Hit) de 0.19→0.65 en una prueba RPG; similares devuelve juegos coherentes. — `app/`
-- _(siguiente: Fase 2 — frontend estética Steam: Simulador + Comparación de modelos)_
+- 2026-06-03 — Commit `198a233` (28 archivos) bajo SamDev: Fase 0 + Fase 1 + apartado ingeniería de datos.
+- 2026-06-03 — **Fases 2-3 COMPLETAS** (código): frontend SPA estética Steam con las 5 pestañas (Simulador, Comparar modelos, Juegos similares, Recomendaciones, Panel analítico) + modos Presentación/Quick + búsqueda y carga de juegos reales (modo validación). Estáticos servidos OK por el backend. **Pendiente: QA visual del usuario.** — `web/`
+- _(siguiente: QA visual → modo presentación guiado → notebook Databricks 08 → documentación)_
 
 ---
 
