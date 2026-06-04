@@ -1,0 +1,294 @@
+{
+  "classes": [
+    "Flop",
+    "Rentable",
+    "Hit"
+  ],
+  "thresholds": {
+    "flop_max": 200000,
+    "hit_min": 1000000
+  },
+  "numeric": {
+    "price": {
+      "median": 4.99,
+      "min": 0.0,
+      "max": 200.0
+    },
+    "total_achievements": {
+      "median": 22.0,
+      "min": 0.0,
+      "max": 5000.0
+    },
+    "total_dlcs": {
+      "median": 0.0,
+      "min": 0.0,
+      "max": 1071.0
+    },
+    "supported_languages": {
+      "median": 6.0,
+      "min": 0.0,
+      "max": 103.0
+    },
+    "min_ram_gb": {
+      "median": 2.0,
+      "min": 0.0,
+      "max": 512.0
+    },
+    "dev_game_count": {
+      "median": 1.0,
+      "min": 1.0,
+      "max": 29.0
+    },
+    "pub_game_count": {
+      "median": 1.0,
+      "min": 1.0,
+      "max": 57.0
+    },
+    "short_desc_len": {
+      "median": 230.0,
+      "min": 0.0,
+      "max": 342.0
+    },
+    "num_genres": {
+      "median": 3.0,
+      "min": 0.0,
+      "max": 10.0
+    },
+    "num_tags": {
+      "median": 5.0,
+      "min": 0.0,
+      "max": 14.0
+    },
+    "num_categories": {
+      "median": 4.0,
+      "min": 0.0,
+      "max": 11.0
+    },
+    "dev_success_prior": {
+      "median": 0.7257,
+      "min": 0.4838,
+      "max": 0.9156
+    }
+  },
+  "boolean": [
+    "is_free",
+    "platform_windows",
+    "platform_mac",
+    "platform_linux",
+    "genre_action",
+    "genre_adventure",
+    "genre_casual",
+    "genre_indie",
+    "genre_massively_multiplayer",
+    "genre_rpg",
+    "genre_racing",
+    "genre_simulation",
+    "genre_sports",
+    "genre_strategy",
+    "genre_violent",
+    "genre_gore",
+    "genre_early_access",
+    "cat_single_player",
+    "cat_multi_player",
+    "cat_co_op",
+    "cat_online_co_op",
+    "cat_full_controller_support",
+    "cat_partial_controller_support",
+    "cat_steam_achievements",
+    "cat_steam_cloud",
+    "cat_steam_workshop",
+    "cat_in_app_purchases",
+    "cat_steam_trading_cards",
+    "cat_remote_play_together",
+    "cat_shared_split_screen_co_op",
+    "tag_first_person",
+    "tag_open_world",
+    "tag_crafting",
+    "tag_story_rich",
+    "tag_survival",
+    "tag_horror",
+    "tag_rpg",
+    "tag_action_rpg",
+    "tag_turn_based",
+    "tag_strategy",
+    "tag_tower_defense",
+    "tag_platformer",
+    "tag_metroidvania",
+    "tag_co_op",
+    "tag_multiplayer",
+    "tag_local_co_op",
+    "tag_pvp",
+    "tag_battle_royale",
+    "tag_sandbox",
+    "tag_simulation",
+    "tag_management",
+    "tag_city_builder",
+    "tag_sports",
+    "tag_racing",
+    "tag_puzzle",
+    "tag_point_&_click",
+    "tag_visual_novel",
+    "tag_anime",
+    "tag_2d",
+    "tag_3d",
+    "tag_realistic",
+    "tag_cartoon",
+    "tag_dark",
+    "tag_atmospheric",
+    "tag_relaxing",
+    "tag_difficult",
+    "tag_casual",
+    "tag_indie",
+    "tag_early_access",
+    "tag_free_to_play",
+    "tag_vr",
+    "tag_moba",
+    "tag_fps",
+    "tag_stealth",
+    "is_early_access"
+  ],
+  "categorical": {
+    "controller_support": {
+      "categories": [
+        "full",
+        "none"
+      ],
+      "default": "none"
+    },
+    "dev_experience": {
+      "categories": [
+        "AAA",
+        "Establecido",
+        "Novato"
+      ],
+      "default": "Novato"
+    },
+    "pub_experience": {
+      "categories": [
+        "AAA",
+        "Establecido",
+        "Novato"
+      ],
+      "default": "Novato"
+    },
+    "release_quarter": {
+      "categories": [
+        "Desconocido",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4"
+      ],
+      "default": "Desconocido"
+    },
+    "price_tier": {
+      "categories": [
+        "Budget",
+        "F2P",
+        "Mid",
+        "Premium"
+      ],
+      "default": "Budget"
+    }
+  },
+  "dev_prior_global": 0.7257,
+  "feat_cols": [
+    "price",
+    "total_achievements",
+    "total_dlcs",
+    "supported_languages",
+    "min_ram_gb",
+    "dev_game_count",
+    "pub_game_count",
+    "short_desc_len",
+    "num_genres",
+    "num_tags",
+    "num_categories",
+    "dev_success_prior",
+    "is_free",
+    "platform_windows",
+    "platform_mac",
+    "platform_linux",
+    "genre_action",
+    "genre_adventure",
+    "genre_casual",
+    "genre_indie",
+    "genre_massively_multiplayer",
+    "genre_rpg",
+    "genre_racing",
+    "genre_simulation",
+    "genre_sports",
+    "genre_strategy",
+    "genre_violent",
+    "genre_gore",
+    "genre_early_access",
+    "cat_single_player",
+    "cat_multi_player",
+    "cat_co_op",
+    "cat_online_co_op",
+    "cat_full_controller_support",
+    "cat_partial_controller_support",
+    "cat_steam_achievements",
+    "cat_steam_cloud",
+    "cat_steam_workshop",
+    "cat_in_app_purchases",
+    "cat_steam_trading_cards",
+    "cat_remote_play_together",
+    "cat_shared_split_screen_co_op",
+    "tag_first_person",
+    "tag_open_world",
+    "tag_crafting",
+    "tag_story_rich",
+    "tag_survival",
+    "tag_horror",
+    "tag_rpg",
+    "tag_action_rpg",
+    "tag_turn_based",
+    "tag_strategy",
+    "tag_tower_defense",
+    "tag_platformer",
+    "tag_metroidvania",
+    "tag_co_op",
+    "tag_multiplayer",
+    "tag_local_co_op",
+    "tag_pvp",
+    "tag_battle_royale",
+    "tag_sandbox",
+    "tag_simulation",
+    "tag_management",
+    "tag_city_builder",
+    "tag_sports",
+    "tag_racing",
+    "tag_puzzle",
+    "tag_point_&_click",
+    "tag_visual_novel",
+    "tag_anime",
+    "tag_2d",
+    "tag_3d",
+    "tag_realistic",
+    "tag_cartoon",
+    "tag_dark",
+    "tag_atmospheric",
+    "tag_relaxing",
+    "tag_difficult",
+    "tag_casual",
+    "tag_indie",
+    "tag_early_access",
+    "tag_free_to_play",
+    "tag_vr",
+    "tag_moba",
+    "tag_fps",
+    "tag_stealth",
+    "is_early_access",
+    "controller_support",
+    "dev_experience",
+    "pub_experience",
+    "release_quarter",
+    "price_tier"
+  ],
+  "models": [
+    "lr",
+    "svm",
+    "mlp"
+  ]
+}
