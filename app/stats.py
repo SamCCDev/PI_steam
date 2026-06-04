@@ -9,7 +9,6 @@
 
 import json
 from pathlib import Path
-import numpy as np
 
 from app import inference as inf
 
@@ -80,6 +79,18 @@ def _confusion():
     return out
 
 
+def _hit_by_quarter():
+    rows = []
+    for q in ["Q1", "Q2", "Q3", "Q4"]:
+        sel = DF[DF["release_quarter"] == q]
+        if len(sel) < 20:
+            continue
+        rows.append({"q": q, "n": int(len(sel)),
+                     "pct_hit": round(float((sel["label"] == 2).mean()) * 100, 1),
+                     "pct_norentable": round(float((sel["label"] >= 1).mean()) * 100, 1)})
+    return rows
+
+
 def _scatter(n=500):
     sample = DF.sample(min(n, len(DF)), random_state=7)
     pts = []
@@ -99,6 +110,7 @@ PAYLOAD = {
     "metrics": _metrics(),
     "confusion": _confusion(),
     "scatter": _scatter(),
+    "hit_by_quarter": _hit_by_quarter(),
     "n_total": int(len(DF)),
 }
 

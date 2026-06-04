@@ -115,7 +115,21 @@ const Charts = (function () {
     });
   }
 
+  function hitByQuarter(el, rows) {
+    const c = get(el);
+    c.setOption({
+      ...base(), tooltip: { trigger: 'axis', valueFormatter: v => v + '%' },
+      legend: { top: 0, textStyle: { color: TXT } }, grid: { top: 36, left: 44, right: 12, bottom: 24 },
+      xAxis: { type: 'category', data: rows.map(r => r.q), axisLine: { lineStyle: { color: GRID } }, axisLabel: { color: AX } },
+      yAxis: { type: 'value', axisLabel: { color: AX, formatter: '{value}%' }, splitLine: { lineStyle: { color: GRID } } },
+      series: [
+        { name: '% Hit', type: 'bar', data: rows.map(r => r.pct_hit), itemStyle: { color: '#a4d007' }, label: { show: true, position: 'top', formatter: '{c}%', color: TXT, fontSize: 10 } },
+        { name: '% No-Flop', type: 'line', data: rows.map(r => r.pct_norentable), itemStyle: { color: '#66c0f4' }, smooth: true }
+      ]
+    });
+  }
+
   function resizeAll() { Object.values(reg).forEach(c => c.resize()); }
-  return { modelBars, marketDonut, priceHist, ownersByGenre, importance, confusion, scatter, resizeAll };
+  return { modelBars, marketDonut, priceHist, ownersByGenre, importance, confusion, scatter, hitByQuarter, resizeAll };
 })();
 window.addEventListener('resize', () => Charts.resizeAll());

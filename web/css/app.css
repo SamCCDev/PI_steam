@@ -89,3 +89,65 @@ select option { background: var(--steam-surface); }
 /* Gráficos */
 .chart { width: 100%; height: 320px; }
 .chart-sm { width: 100%; height: 240px; }
+
+/* ==========================================================================
+   Utilidades de color Steam — Tailwind v4 ignora la config de colores por JS,
+   así que las definimos en CSS plano. Al no existir en el theme de Tailwind no
+   hay conflicto de cascada (además, estilos sin @layer ganan a los de Tailwind).
+   ========================================================================== */
+.bg-steam-bg { background-color: #171a21; }
+.bg-steam-surface { background-color: #1b2838; }
+.bg-steam-surface2 { background-color: #16202d; }
+.bg-steam-border { background-color: #2a475e; }
+.bg-steam-accent { background-color: #66c0f4; }
+.text-steam-text { color: #c7d5e0; }
+.text-steam-accent { color: #66c0f4; }
+.text-steam-accentd { color: #417a9b; }
+.text-steam-muted { color: #8f98a0; }
+.text-steam-flop { color: #c75450; }
+.text-steam-rentable { color: #66c0f4; }
+.text-steam-hit { color: #a4d007; }
+.text-steam-bg { color: #171a21; }
+.border-steam-border { border-color: #2a475e; }
+.border-steam-accent { border-color: #66c0f4; }
+.border-steam-flop { border-color: #c75450; }
+.hover\:text-steam-accent:hover { color: #66c0f4; }
+.hover\:bg-steam-border:hover { background-color: #2a475e; }
+.focus\:border-steam-accent:focus { border-color: #66c0f4; }
+
+/* Cuerpo: fondo garantizado + espacio para la consola fija */
+body { background-color: #171a21; color: #c7d5e0; padding-bottom: 158px; }
+
+/* Transiciones más suaves */
+#content { animation: fade .3s ease; }
+.nav-btn, .chip, .mode-btn, .card, .badge { transition: all .18s ease; }
+.card:hover { border-color: #34566f; }
+.chip:active { transform: scale(.95); }
+
+/* ==========================================================================
+   Consola / terminal de actividad (estilo del primer HTML)
+   ========================================================================== */
+#console {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: #0a0e13; border-top: 1px solid #2a475e; height: 150px;
+  font-family: Consolas, 'Courier New', monospace; font-size: 12px;
+  transition: height .25s ease; box-shadow: 0 -8px 24px rgba(0,0,0,.4);
+}
+#console.collapsed { height: 30px; }
+#console-head {
+  height: 30px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; color: #8f98a0; cursor: pointer; user-select: none;
+  border-bottom: 1px solid #16202d; background: #0d1218;
+}
+#term-body { height: 120px; overflow: auto; padding: 6px 14px; line-height: 1.55; }
+#console.collapsed #term-body { display: none; }
+.t-line { white-space: pre-wrap; }
+.t-time { color: #46525f; margin-right: 8px; }
+.t-info { color: #8f98a0; }
+.t-ok   { color: #a4d007; }
+.t-warn { color: #f5a623; }
+.t-err  { color: #c75450; }
+.t-data { color: #66c0f4; }
+.pulse { width: 9px; height: 9px; border-radius: 50%; background: #46525f; display: inline-block; }
+.pulse.on { background: #a4d007; box-shadow: 0 0 8px #a4d007; animation: blink .8s infinite; }
+@keyframes blink { 50% { opacity: .25; } }

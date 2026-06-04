@@ -4,19 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SteamPredict v2 — Predictor Comercial de Videojuegos</title>
+  <!-- Tailwind v4 (vendorizado) para utilidades de layout. Los colores 'steam-*'
+       se definen en css/app.css (v4 no soporta config de colores por JS). -->
   <script src="/vendor/tailwind.js"></script>
-  <script>
-    tailwind.config = {
-      theme: { extend: { colors: {
-        steam: {
-          bg: '#171a21', surface: '#1b2838', surface2: '#16202d',
-          border: '#2a475e', accent: '#66c0f4', accentd: '#417a9b',
-          text: '#c7d5e0', muted: '#8f98a0',
-          flop: '#c75450', rentable: '#66c0f4', hit: '#a4d007'
-        }
-      }, fontFamily: { sans: ['Motiva Sans', 'system-ui', 'Segoe UI', 'sans-serif'] } } }
-    }
-  </script>
   <script src="/vendor/lucide.js"></script>
   <script src="/vendor/echarts.min.js"></script>
   <link rel="stylesheet" href="/css/app.css">
@@ -74,12 +64,13 @@
     </main>
   </div>
 
-  <!-- Overlay de carga -->
-  <div id="overlay" class="fixed inset-0 bg-steam-bg/70 backdrop-blur-sm hidden items-center justify-center z-50">
-    <div class="text-center">
-      <i data-lucide="loader-circle" class="w-8 h-8 text-steam-accent animate-spin mx-auto"></i>
-      <p class="text-sm text-steam-muted mt-2">Calculando…</p>
+  <!-- Consola / terminal de actividad -->
+  <div id="console">
+    <div id="console-head">
+      <span class="flex items-center gap-2"><span id="pulse" class="pulse"></span> consola · SteamPredict v2</span>
+      <span id="console-toggle">▾ ocultar</span>
     </div>
+    <div id="term-body"></div>
   </div>
 
   <script src="/js/api.js"></script>

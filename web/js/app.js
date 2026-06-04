@@ -31,10 +31,22 @@ const CLS = ['Flop', 'Rentable', 'Hit'];
 const CLS_COLOR = { Flop: '#c75450', Rentable: '#66c0f4', Hit: '#a4d007' };
 
 const $ = s => document.querySelector(s);
-const overlay = (on) => { $('#overlay').style.display = on ? 'flex' : 'none'; };
+const busy = (on) => { const p = $('#pulse'); if (p) p.classList.toggle('on', on); };
 const pct = x => (x * 100).toFixed(1) + '%';
 const fmtOwners = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : '' + n;
+const fmtMoney = n => n >= 1e6 ? '$' + (n / 1e6).toFixed(1) + 'M' : n >= 1000 ? '$' + Math.round(n / 1000) + 'k' : '$' + Math.round(n);
 const icons = () => window.lucide && lucide.createIcons();
+
+function term(msg, level = 'info') {
+  const b = $('#term-body'); if (!b) return;
+  const t = new Date().toLocaleTimeString('es', { hour12: false });
+  const line = document.createElement('div');
+  line.className = 't-line t-' + level;
+  line.innerHTML = `<span class="t-time">${t}</span>${msg}`;
+  b.appendChild(line);
+  b.scrollTop = b.scrollHeight;
+  while (b.childElementCount > 140) b.removeChild(b.firstChild);
+}
 
 // ── Inicio ─────────────────────────────────────────────────────────────
 async function init() {
@@ -47,6 +59,8 @@ async function init() {
   buildForm();
   bindUI();
   setMode('presentacion');
+  term('SteamPredict v2 iniciado', 'ok');
+  term('modelos cargados: ' + CFG.models.join(' · ').toUpperCase(), 'data');
   setTab('simulador');
 }
 
@@ -149,7 +163,11 @@ function bindUI() {
     b.addEventListener('click', () => setTab(b.dataset.tab)));
   document.querySelectorAll('.mode-btn').forEach(b =>
     b.addEventListener('click', () => setMode(b.dataset.mode)));
-  $('#reset-btn').addEventListener('click', () => { realGame = null; initFeatures(); buildForm(); runActive(); });
+  $('#reset-btn').addEventListener('click', () => { realGame = null; initFeatures(); buildForm(); term('formulario reiniciado', 'info'); runActive(); });
+  $('#console-head').addEventListener('click', () => {
+    const c = $('#console'); c.classList.toggle('collapsed');
+    $('#console-toggle').textContent = c.classList.contains('collapsed') ? '▴ mostrar' : '▾ ocultar';
+  });
   bindSearch();
 }
 
@@ -171,22 +189,31 @@ function setTab(name) {
 function onChange() { clearTimeout(timer); timer = setTimeout(runActive, 350); }
 
 async function runActive() {
-  overlay(true);
+  busy(true);
   try {
     if (TAB === 'simulador' || TAB === 'comparacion') {
+      term('▶ inferencia sobre el juego (LR · SVM · MLP)…');
       lastPredict = await API.post('/api/predict', { features });
+      const mm = lastPredict.modelos[simModel];
+      term(`✓ ${simModel.toUpperCase()} → ${mm.clase} · P(Hit)=${pct(mm.probs.Hit)} · owners≈${fmtOwners(lastPredict.owners_estimados)}`, 'ok');
+      if (lastPredict.incertidumbre.desacuerdo) term('⚠ los modelos no coinciden — incertidumbre alta', 'warn');
+      if ((TAB === 'comparacion') && !statsData) statsData = await API.get('/api/stats');
     } else if (TAB === 'similares') {
+      term('▶ buscando juegos del mismo camino (NearestNeighbors)…');
       lastSimilar = await API.post('/api/similar', { features, k: 9 });
+      term(`✓ ${lastSimilar.juegos.length} juegos similares`, 'ok');
     } else if (TAB === 'recomendaciones') {
+      term(`▶ optimizando paquete de cambios (beam search · ${simModel.toUpperCase()})…`);
       lastRec = await API.post('/api/recommend', { features, K: 3, model: simModel });
-    } else if (TAB === 'panel' && !statsData) {
-      statsData = await API.get('/api/stats');
+      term(`✓ mejor paquete: ${lastRec.delta >= 0 ? '+' : ''}${pct(lastRec.delta)} en P(Hit)`, lastRec.delta > 0 ? 'ok' : 'info');
+    } else if (TAB === 'panel') {
+      if (!statsData) { term('▶ cargando agregados del dataset…'); statsData = await API.get('/api/stats'); term('✓ panel analítico listo', 'ok'); }
     }
-    if ((TAB === 'comparacion' || TAB === 'panel') && !statsData) statsData = await API.get('/api/stats');
     render();
   } catch (e) {
+    term('✗ ' + e.message, 'err');
     $('#content').innerHTML = `<div class="card text-steam-flop">Error: ${e.message}. ¿Está corriendo el backend? (python app/server.py)</div>`;
-  } finally { overlay(false); }
+  } finally { busy(false); }
 }
 
 // ── Render por pestaña ─────────────────────────────────────────────────
@@ -227,10 +254,11 @@ function renderSimulador() {
   $('#content').innerHTML = `
     <div class="space-y-5 fade-in">
       ${validation}
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-4 gap-4">
         ${kpi('Clasificación', `<div class="text-2xl font-bold">${badge(m.clase)}</div>`, 'target')}
         ${kpi('Prob. de no-Flop', `<div class="text-2xl font-bold text-steam-accent">${pct(noFlop)}</div>`, 'shield-check')}
         ${kpi('Owners estimados', `<div class="text-2xl font-bold text-steam-hit">${fmtOwners(lastPredict.owners_estimados)}</div>`, 'users')}
+        ${kpi('Ingreso bruto est.', `<div class="text-2xl font-bold text-steam-hit">${features.price > 0 ? fmtMoney(Math.round(lastPredict.owners_estimados * features.price * 0.7)) : 'F2P'}</div>`, 'dollar-sign')}
       </div>
       <div class="grid gap-4" style="grid-template-columns: 1.3fr 1fr;">
         <div class="card">
@@ -373,6 +401,7 @@ function renderPanel() {
         <div class="card"><h3 class="font-semibold mb-2">Variables que empujan a Hit (LR)</h3><div id="c-imp" class="chart"></div></div>
         <div class="card"><h3 class="font-semibold mb-2">Precio vs Owners (muestra)</h3><div id="c-scatter" class="chart"></div></div>
         <div class="card"><h3 class="font-semibold mb-2">Matriz de confusión (MLP)</h3><div id="c-conf" class="chart"></div></div>
+        <div class="card"><h3 class="font-semibold mb-2">Éxito por trimestre de lanzamiento</h3><div id="c-quarter" class="chart-sm"></div></div>
       </div>
       <div class="card"><h3 class="font-semibold mb-2">Desempeño de los modelos (test)</h3>
         <table class="w-full text-sm text-left"><thead class="text-steam-muted text-xs"><tr><th class="py-1">Modelo</th><th>AUC</th><th>F1</th><th>Accuracy</th></tr></thead><tbody>${metRows}</tbody></table>
@@ -384,6 +413,7 @@ function renderPanel() {
   Charts.importance($('#c-imp'), s.lr_importance);
   Charts.scatter($('#c-scatter'), s.scatter);
   if (s.confusion.mlp) Charts.confusion($('#c-conf'), s.confusion.mlp);
+  if (s.hit_by_quarter && s.hit_by_quarter.length) Charts.hitByQuarter($('#c-quarter'), s.hit_by_quarter);
 }
 
 // ── Búsqueda y carga de juego real (modo validación) ───────────────────
@@ -408,12 +438,14 @@ function bindSearch() {
 async function loadGame(appid) {
   $('#game-results').classList.add('hidden');
   $('#game-search').value = '';
-  overlay(true);
+  busy(true);
+  term('▶ cargando juego real #' + appid + '…');
   const g = await API.get('/api/game/' + appid);
-  overlay(false);
-  if (g.error) return;
+  busy(false);
+  if (g.error) { term('✗ juego no encontrado', 'err'); return; }
   realGame = g;
   for (const k in g.features) if (k in features) features[k] = g.features[k];
+  term(`✓ cargado: ${g.name} — real: ${g.clase_real} (${fmtOwners(g.owners_real)} owners)`, 'data');
   buildForm();
   setTab('simulador');
 }
