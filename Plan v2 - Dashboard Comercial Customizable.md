@@ -341,11 +341,11 @@ Nada de v1 se modifica ni se borra.
 - [ ] Modo quick.
 - [ ] Fallback estático verificado.
 
-### Fase 5 — Documentación para el estudio
-- [ ] Reporte de métricas, matrices, metodología.
-- [ ] Ángulo ingeniería de datos: anonimización, datos de panel (serie mensual), mención Spark.
+### Fase 5 — Documentación para el estudio  🟡 EN CURSO
+- [x] Reporte de métricas, matrices, metodología → `Documentacion del Estudio - Predictor v2.md` (humanizado).
+- [x] Ángulo ingeniería de datos: anonimización, datos de panel (serie mensual), Spark/Databricks.
 - [ ] Actualizar `README.md`.
-- [ ] Commit + push con credenciales de SamDev.
+- [x] Commits bajo SamDev (`198a233`, `c1e7554`, `1f341b1`, `2f2ebb4`). Push pendiente de tu visto bueno.
 
 ### Pendiente cuando termine el ETL
 - [ ] Reejecutar `build_dataset_v2.py` con los ~2k nuevos juegos.
