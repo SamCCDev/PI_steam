@@ -313,7 +313,7 @@ Nada de v1 se modifica ni se borra.
 - [x] `reports/metrics.json` + matrices de confusión (`reports/confusion_*.json`).
 - [x] `output/model_web.json` regenerado (no se re-embebe en el HTML → v1 intacta).
 - [x] `models/feature_schema.json` (defaults/categorías/umbrales para el backend).
-- [ ] Versión Databricks `notebooks/08_train_all.py`.
+- [x] Versión Databricks `notebooks/08_train_all.py` (entrenamiento consolidado v2 en UC; lógica validada contra el CSV local: mismas 92 features y métricas).
 
 **Resultados test (split 80/20):** LR AUC 0.884 / F1 0.69 · SVM AUC 0.881 / F1 0.72 · **MLP AUC 0.888 / F1 0.74 / acc 0.77** · owners-reg R²(log) 0.63. Balance Flop/Rentable/Hit = 27/54/18.
 
@@ -390,7 +390,9 @@ Nada de v1 se modifica ni se borra.
 - 2026-06-03 — **Fase 1 COMPLETA**: backend stdlib (`app/server.py` + `inference.py` + `stats.py`). Endpoints predict/recommend/similar/stats/games/config verificados por HTTP. Recomendador beam search sube P(Hit) de 0.19→0.65 en una prueba RPG; similares devuelve juegos coherentes. — `app/`
 - 2026-06-03 — Commit `198a233` (28 archivos) bajo SamDev: Fase 0 + Fase 1 + apartado ingeniería de datos.
 - 2026-06-03 — **Fases 2-3 COMPLETAS** (código): frontend SPA estética Steam con las 5 pestañas (Simulador, Comparar modelos, Juegos similares, Recomendaciones, Panel analítico) + modos Presentación/Quick + búsqueda y carga de juegos reales (modo validación). Estáticos servidos OK por el backend. **Pendiente: QA visual del usuario.** — `web/`
-- _(siguiente: QA visual → modo presentación guiado → notebook Databricks 08 → documentación)_
+- 2026-06-03 — Frontend validado por el usuario ("bastante bien"). Fix Tailwind v4 + terminal de actividad + transiciones + extras (KPI ingreso, gráfico por trimestre) commiteado en `1f341b1`.
+- 2026-06-03 — `notebooks/08_train_all.py`: entrenamiento consolidado v2 en Databricks (LR+GridSearchCV, SVM-RBF, MLP, owners-reg) que guarda `model_metrics_v2` y `model_lr_coefficients_v2` en Unity Catalog. Lógica validada localmente (mismas 92 features y métricas que `train_models.py`). — `notebooks/`
+- _(siguiente: documentación para el estudio + modo presentación guiado + pulido visual)_
 
 ---
 
