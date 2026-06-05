@@ -40,6 +40,19 @@ MODELS = {name: joblib.load(MODELS_DIR / f"{name}.joblib") for name in SCHEMA["m
 OWNERS_REG = joblib.load(MODELS_DIR / "owners_regressor.joblib")
 SIMILAR = joblib.load(MODELS_DIR / "similar.joblib")
 
+# ── Modelos post-lanzamiento (señales tempranas de recepción) ─────────────
+POST_EXTRA = SCHEMA.get("post_extra", [])
+POST_FEAT_COLS = SCHEMA.get("post_feat_cols", [])
+POST_NUMERIC = SCHEMA.get("post_numeric", {})
+POST_MODELS = {}
+for _n in SCHEMA["models"]:
+    _p = MODELS_DIR / f"post_{_n}.joblib"
+    if _p.exists():
+        POST_MODELS[_n] = joblib.load(_p)
+POST_LABELS = {"ccu": "Jugadores concurrentes (pico)", "rating_porcentaje": "% reseñas positivas",
+               "metacritic_score": "Nota Metacritic", "ts_positive_ratio": "Proporción positiva",
+               "ts_avg_playtime_hrs": "Horas jugadas (prom.)", "ts_months_active": "Meses activo"}
+
 DF = pd.read_csv(OUTPUT_DIR / "dataset_ml.csv", sep=";")
 PREVALENCE = {c: float(DF[c].mean()) for c in BOOL_FEATS}
 
@@ -112,6 +125,18 @@ def _row(state: dict) -> pd.DataFrame:
     return pd.DataFrame([{c: state.get(c, 0) for c in FEAT_COLS}])[FEAT_COLS]
 
 
+def _post_state(features: dict) -> dict:
+    """Estado pre-lanzamiento + las señales tempranas de recepción (default = mediana)."""
+    s = normalize_state(features)
+    for c in POST_EXTRA:
+        s[c] = features.get(c, POST_NUMERIC.get(c, {}).get("median", 0))
+    return s
+
+
+def _post_row(state: dict) -> pd.DataFrame:
+    return pd.DataFrame([{c: state.get(c, 0) for c in POST_FEAT_COLS}])[POST_FEAT_COLS]
+
+
 def _probs(state: dict, model: str) -> np.ndarray:
     return MODELS[model].predict_proba(_row(state))[0]
 
@@ -145,41 +170,40 @@ def _explain(state: dict, model: str, target_idx: int = HIT_IDX, top: int = 6) -
 
 
 # ── API: predicción multi-modelo + incertidumbre ──────────────────────────
-def predict(features: dict, model: str = "todos") -> dict:
-    state = normalize_state(features)
-    row = _row(state)
-    out = {}
-    argmax_classes = []
-    for name in MODELS:
-        p = MODELS[name].predict_proba(row)[0]
-        probs = {CLASSES[i]: round(float(p[i]), 4) for i in range(3)}
-        clase = CLASSES[int(np.argmax(p))]
-        out[name] = {"probs": probs, "clase": clase}
-        argmax_classes.append(clase)
+def predict(features: dict, model: str = "todos", mode: str = "pre") -> dict:
+    pre_state = normalize_state(features)
+    use_post = mode == "post" and bool(POST_MODELS)
+    if use_post:
+        mdl, row = POST_MODELS, _post_row(_post_state(features))
+    else:
+        mdl, row = MODELS, _row(pre_state)
 
-    owners_est = int(np.expm1(OWNERS_REG.predict(row)[0]))
-    owners_est = max(0, owners_est)
+    out, argmax_classes = {}, []
+    for name in mdl:
+        p = mdl[name].predict_proba(row)[0]
+        out[name] = {"probs": {CLASSES[i]: round(float(p[i]), 4) for i in range(3)},
+                     "clase": CLASSES[int(np.argmax(p))]}
+        argmax_classes.append(out[name]["clase"])
 
-    # Incertidumbre: margen top-2 del modelo de referencia + desacuerdo entre modelos
+    # owners y explicación se mantienen sobre las features pre-lanzamiento (decisiones de diseño)
+    owners_est = max(0, int(np.expm1(OWNERS_REG.predict(_row(pre_state))[0])))
+    ref_pre = "mlp" if "mlp" in MODELS else list(MODELS)[0]
+
     ref = "mlp" if "mlp" in out else list(out)[0]
     ref_sorted = sorted(out[ref]["probs"].values(), reverse=True)
     margen = round(ref_sorted[0] - ref_sorted[1], 4)
     desacuerdo = len(set(argmax_classes)) > 1
-    if desacuerdo or margen < 0.12:
-        nivel = "alta"
-    elif margen < 0.30:
-        nivel = "media"
-    else:
-        nivel = "baja"
+    nivel = "alta" if (desacuerdo or margen < 0.12) else "media" if margen < 0.30 else "baja"
 
     return {
+        "modo": "post" if use_post else "pre",
         "modelos": out,
         "owners_estimados": owners_est,
-        "clase_por_owners": (_class_from_owners(owners_est)),
+        "clase_por_owners": _class_from_owners(owners_est),
         "incertidumbre": {"margen_top2": margen, "desacuerdo": desacuerdo,
                           "nivel": nivel, "modelo_ref": ref},
-        "explicacion": {"target": "Hit", "modelo": ref,
-                        "factores": _explain(state, ref, HIT_IDX)},
+        "explicacion": {"target": "Hit", "modelo": ref_pre,
+                        "factores": _explain(pre_state, ref_pre, HIT_IDX)},
     }
 
 
@@ -333,4 +357,10 @@ def get_config() -> dict:
         "categorical": SCHEMA["categorical"],
         "groups": groups,
         "dev_prior_global": SCHEMA.get("dev_prior_global"),
+        "post": {
+            "enabled": bool(POST_MODELS),
+            "extra": POST_EXTRA,
+            "numeric": {c: {**POST_NUMERIC.get(c, {}), "label": POST_LABELS.get(c, c)}
+                        for c in POST_EXTRA},
+        },
     }

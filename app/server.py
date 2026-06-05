@@ -118,7 +118,8 @@ class Handler(BaseHTTPRequestHandler):
         data = self._body_json()
         try:
             if path == "/api/predict":
-                return self._json(inf.predict(data.get("features", {}), data.get("model", "todos")))
+                return self._json(inf.predict(data.get("features", {}),
+                                              data.get("model", "todos"), data.get("mode", "pre")))
             if path == "/api/recommend":
                 return self._json(inf.recommend(data.get("features", {}),
                                                 int(data.get("K", 3)), data.get("model", "mlp")))

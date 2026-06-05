@@ -30,6 +30,16 @@ const EXP_GAMES = { Novato: 1, Establecido: 5, AAA: 15 };
 const CLS = ['Flop', 'Rentable', 'Hit'];
 const CLS_COLOR = { Flop: '#c75450', Rentable: '#66c0f4', Hit: '#a4d007' };
 
+let launched = false;   // modo post-lanzamiento
+const POST_UI = {
+  rating_porcentaje: { min: 0, max: 100, step: 1 },
+  metacritic_score: { min: 0, max: 100, step: 1 },
+  ccu: { min: 0, max: 50000, step: 100 },
+  ts_positive_ratio: { min: 0, max: 1, step: 0.01 },
+  ts_avg_playtime_hrs: { min: 0, max: 200, step: 1 },
+  ts_months_active: { min: 0, max: 60, step: 1 },
+};
+
 const $ = s => document.querySelector(s);
 const busy = (on) => { const p = $('#pulse'); if (p) p.classList.toggle('on', on); };
 const pct = x => (x * 100).toFixed(1) + '%';
@@ -68,6 +78,7 @@ function initFeatures() {
   for (const c in CFG.numeric) features[c] = CFG.numeric[c].median;
   ['genre', 'cat', 'tag', 'platform'].forEach(g => CFG.groups[g].forEach(it => features[it.col] = 0));
   for (const c in CFG.categorical) features[c] = CFG.categorical[c].default;
+  if (CFG.post && CFG.post.enabled) for (const c in CFG.post.numeric) features[c] = CFG.post.numeric[c].median;
   features['platform_windows'] = 1;   // default razonable
   features['cat_single_player'] = 1;
 }
@@ -76,6 +87,8 @@ function initFeatures() {
 function buildForm() {
   const f = $('#form');
   f.innerHTML = '';
+
+  if (CFG.post && CFG.post.enabled) f.appendChild(launchToggle());
 
   // Numéricos
   const numWrap = document.createElement('div');
@@ -100,7 +113,54 @@ function buildForm() {
   f.appendChild(chipGroup('Etiquetas (tags)', CFG.groups.tag, MODE === 'presentacion'));
   f.appendChild(chipGroup('Características', CFG.groups.cat, false));
   f.appendChild(chipGroup('Plataformas', CFG.groups.platform, true));
+  if (launched && CFG.post && CFG.post.enabled) f.appendChild(postSection());
   icons();
+}
+
+function launchToggle() {
+  const d = document.createElement('div');
+  d.className = 'flex items-center justify-between mb-3 p-2 rounded bg-steam-bg border border-steam-border';
+  d.innerHTML = `<span class="text-xs text-steam-muted">¿Ya lanzaste el juego?</span>
+    <div class="flex gap-1 text-xs">
+      <button data-l="0" class="lbtn px-2 py-1 rounded ${!launched ? 'bg-steam-accent text-steam-bg font-semibold' : 'text-steam-muted'}">Aún no</button>
+      <button data-l="1" class="lbtn px-2 py-1 rounded ${launched ? 'bg-steam-accent text-steam-bg font-semibold' : 'text-steam-muted'}">Ya lo lancé</button>
+    </div>`;
+  d.querySelectorAll('.lbtn').forEach(b => b.addEventListener('click', () => setLaunched(b.dataset.l === '1')));
+  return d;
+}
+
+function postSection() {
+  const det = document.createElement('details');
+  det.open = true;
+  det.className = 'border-t border-steam-border pt-2';
+  det.innerHTML = `<summary class="section-title cursor-pointer mb-2 select-none">Señales post-lanzamiento</summary>`;
+  const wrap = document.createElement('div');
+  wrap.className = 'space-y-3';
+  for (const c in CFG.post.numeric) {
+    wrap.appendChild(numFieldGeneric(c, CFG.post.numeric[c].label, POST_UI[c] || { min: 0, max: 100, step: 1 }));
+  }
+  det.appendChild(wrap);
+  return det;
+}
+
+function numFieldGeneric(col, label, ui) {
+  const d = document.createElement('div');
+  const val = features[col] ?? ui.min;
+  d.innerHTML = `<div class="field-label"><span>${label}</span><span class="field-val" id="lab-${col}">${val}</span></div>
+    <input type="range" min="${ui.min}" max="${ui.max}" step="${ui.step}" value="${Math.min(ui.max, Math.max(ui.min, val))}" class="w-full" id="in-${col}">`;
+  d.querySelector('input').addEventListener('input', e => {
+    features[col] = +e.target.value;
+    $('#lab-' + col).textContent = features[col];
+    onChange();
+  });
+  return d;
+}
+
+function setLaunched(v) {
+  launched = v;
+  term(v ? 'modo post-lanzamiento activado' : 'modo pre-lanzamiento', 'data');
+  buildForm();
+  if (TAB !== 'simulador' && TAB !== 'comparacion') setTab('simulador'); else runActive();
 }
 
 function numField(col, ui) {
@@ -192,8 +252,8 @@ async function runActive() {
   busy(true);
   try {
     if (TAB === 'simulador' || TAB === 'comparacion') {
-      term('▶ inferencia sobre el juego (LR · SVM · MLP)…');
-      lastPredict = await API.post('/api/predict', { features });
+      term(`▶ inferencia ${launched ? 'POST' : 'PRE'}-lanzamiento (LR · SVM · MLP)…`);
+      lastPredict = await API.post('/api/predict', { features, mode: launched ? 'post' : 'pre' });
       const mm = lastPredict.modelos[simModel];
       term(`✓ ${simModel.toUpperCase()} → ${mm.clase} · P(Hit)=${pct(mm.probs.Hit)} · owners≈${fmtOwners(lastPredict.owners_estimados)}`, 'ok');
       if (lastPredict.incertidumbre.desacuerdo) term('⚠ los modelos no coinciden — incertidumbre alta', 'warn');
@@ -253,6 +313,7 @@ function renderSimulador() {
   const uncColor = { baja: '#a4d007', media: '#f5a623', alta: '#c75450' }[unc.nivel];
   $('#content').innerHTML = `
     <div class="space-y-5 fade-in">
+      ${lastPredict.modo === 'post' ? '<div class="card card-h text-sm flex items-center gap-2"><span class="badge badge-rentable">post-lanzamiento</span> Predicción refinada con señales tempranas de recepción (ratings, jugadores, Metacritic).</div>' : ''}
       ${validation}
       <div class="grid grid-cols-4 gap-4">
         ${kpi('Clasificación', `<div class="text-2xl font-bold">${badge(m.clase)}</div>`, 'target')}
