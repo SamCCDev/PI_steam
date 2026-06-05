@@ -135,6 +135,17 @@ aunque su error en escala absoluta es alto, algo esperable dado que SteamSpy rep
 - Entre los factores que la regresión logística asocia a la categoría Hit aparecen el número de etiquetas, el
   soporte multijugador y la experiencia previa del estudio.
 
+### 5.5 Modelo post-lanzamiento
+
+Además del predictor pre-lanzamiento se entrenó una variante que incorpora señales tempranas de recepción,
+disponibles una vez publicado el juego: jugadores concurrentes, porcentaje de reseñas positivas, nota de
+Metacritic, proporción positiva y horas jugadas promedio. Se excluye el volumen bruto de reseñas, que sería un
+sustituto casi directo del número de propietarios.
+
+Con esas señales el AUC del perceptrón sube de 0,888 a 0,907. La lectura es directa: el diseño del juego deja
+un margen de incertidumbre que solo se cierra cuando llegan los primeros datos de cómo lo recibe el público. El
+dashboard refleja esto con un interruptor "aún no lo lancé / ya lo lancé" que alterna entre ambos modelos.
+
 ## 6. Ingeniería de datos
 
 El proyecto incorpora tres técnicas vistas en la asignatura de Ingeniería de Datos, aplicadas al conjunto de
@@ -171,5 +182,5 @@ mostrarlo en la exposición sin depender de la red.
   como predictivos.
 - El indicador de seguidores del hub (proxy de listas de deseos) quedó mal mapeado en el ETL y se descarta por
   varianza casi nula.
-- Las líneas siguientes son: una variante post-lanzamiento que aproveche el panel mensual de reseñas, la
-  extracción de señales de texto de la descripción y la ampliación del conjunto a más juegos.
+- Las líneas siguientes son: la extracción de señales de texto de la descripción (NLP), el uso del panel
+  mensual completo para un modelo de evolución temporal, y la ampliación del conjunto a más juegos.

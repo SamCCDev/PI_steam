@@ -392,7 +392,10 @@ Nada de v1 se modifica ni se borra.
 - 2026-06-03 — **Fases 2-3 COMPLETAS** (código): frontend SPA estética Steam con las 5 pestañas (Simulador, Comparar modelos, Juegos similares, Recomendaciones, Panel analítico) + modos Presentación/Quick + búsqueda y carga de juegos reales (modo validación). Estáticos servidos OK por el backend. **Pendiente: QA visual del usuario.** — `web/`
 - 2026-06-03 — Frontend validado por el usuario ("bastante bien"). Fix Tailwind v4 + terminal de actividad + transiciones + extras (KPI ingreso, gráfico por trimestre) commiteado en `1f341b1`.
 - 2026-06-03 — `notebooks/08_train_all.py`: entrenamiento consolidado v2 en Databricks (LR+GridSearchCV, SVM-RBF, MLP, owners-reg) que guarda `model_metrics_v2` y `model_lr_coefficients_v2` en Unity Catalog. Lógica validada localmente (mismas 92 features y métricas que `train_models.py`). — `notebooks/`
-- _(siguiente: documentación para el estudio + modo presentación guiado + pulido visual)_
+- 2026-06-03 — Documentación del estudio (`Documentacion del Estudio - Predictor v2.md`), README v2, y push de todos los commits a GitHub (bajo SamDev).
+- 2026-06-03 — **Explicabilidad por predicción**: `/api/predict` devuelve los factores que más mueven P(Hit) (contribución por perturbación, modelo-agnóstica); tarjeta nueva en el Simulador.
+- 2026-06-03 — **Modelo post-lanzamiento**: 3 modelos (`post_*.joblib`) que añaden señales de recepción (ccu, rating, metacritic, playtime). MLP 0.888 → **0.907 AUC**. Toggle "ya lancé / aún no" en el Simulador. Doc del estudio §5.5 actualizada.
+- _(siguiente: modo presentación guiado + pulido visual + integrar rediseño del frontend)_
 
 ---
 
