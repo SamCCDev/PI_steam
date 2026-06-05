@@ -280,7 +280,27 @@ function renderSimulador() {
             : '✓ Los tres modelos <b class="text-steam-text">coinciden</b> en la clasificación.'}</p>
         </div>
       </div>
+      ${explainCard(lastPredict.explicacion)}
     </div>`;
+}
+
+function explainCard(exp) {
+  if (!exp) return '';
+  const fs = exp.factores || [];
+  const maxAbs = Math.max(0.01, ...fs.map(f => Math.abs(f.delta)));
+  const rows = fs.length ? fs.map(f => {
+    const w = Math.min(100, Math.abs(f.delta) / maxAbs * 100).toFixed(0);
+    const col = f.delta >= 0 ? '#a4d007' : '#c75450';
+    return `<div class="flex items-center gap-3 py-1">
+      <span class="w-48 text-sm truncate" title="${f.factor}">${f.factor}</span>
+      <div class="flex-1 prob-track" style="height:14px"><div class="prob-fill" style="width:${w}%;background:${col}"></div></div>
+      <span class="text-xs w-16 text-right" style="color:${col}">${f.delta >= 0 ? '+' : ''}${pct(f.delta)}</span>
+    </div>`;
+  }).join('') : '<p class="text-sm text-steam-muted">Tu juego está en valores base. Ajusta opciones para ver qué influye en P(Hit).</p>';
+  return `<div class="card">
+    <h3 class="font-semibold mb-1 flex items-center gap-2"><i data-lucide="search" class="w-4 h-4 text-steam-accent"></i> ¿Qué influye en tu probabilidad de Hit?</h3>
+    <p class="text-xs text-steam-muted mb-3">Aporte de cada decisión a P(Hit) según el modelo ${exp.modelo.toUpperCase()}. Verde acerca a Hit, rojo aleja.</p>
+    ${rows}</div>`;
 }
 
 function selModel(m) { simModel = m; render(); }

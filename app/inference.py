@@ -61,6 +61,25 @@ def pretty_label(col: str) -> str:
     return " ".join(w.upper() if w.lower() in small else w.capitalize() for w in txt.split())
 
 
+# Etiquetas legibles de las features no booleanas (para la explicabilidad)
+NICE_LABELS = {
+    "price": "Precio", "supported_languages": "Idiomas soportados",
+    "total_achievements": "Logros", "total_dlcs": "DLCs", "min_ram_gb": "RAM mínima",
+    "short_desc_len": "Longitud de la descripción", "dev_game_count": "Juegos previos del estudio",
+    "pub_game_count": "Juegos previos del publisher", "dev_experience": "Experiencia del estudio",
+    "pub_experience": "Experiencia del publisher", "controller_support": "Soporte de control",
+    "release_quarter": "Trimestre de lanzamiento", "dev_success_prior": "Historial del estudio",
+}
+# Features derivadas: son consecuencia de otras, no decisiones; se omiten de la explicación.
+_DERIVED_SKIP = {"num_genres", "num_tags", "num_categories", "price_tier"}
+
+
+def feat_label(col: str) -> str:
+    if col.startswith(("genre_", "cat_", "tag_", "platform_", "is_")):
+        return pretty_label(col)
+    return NICE_LABELS.get(col, col)
+
+
 # ── Construcción del vector de entrada ────────────────────────────────────
 def _defaults() -> dict:
     d = {c: SCHEMA["numeric"][c]["median"] for c in NUM_FEATS}
@@ -101,6 +120,30 @@ def _phit(state: dict, model: str) -> float:
     return float(_probs(state, model)[HIT_IDX])
 
 
+def _explain(state: dict, model: str, target_idx: int = HIT_IDX, top: int = 6) -> list:
+    """Contribución de cada feature a P(clase objetivo): cuánto cambia la probabilidad
+    si esa feature se lleva a su valor base (mediana / 0 / categoría por defecto).
+    Modelo-agnóstico: vale para LR, SVM y MLP por igual."""
+    if model not in MODELS:
+        model = "mlp" if "mlp" in MODELS else list(MODELS)[0]
+    defaults = _defaults()
+    base_p = float(MODELS[model].predict_proba(_row(state))[0][target_idx])
+    out = []
+    for col in FEAT_COLS:
+        if col in _DERIVED_SKIP:
+            continue
+        if state.get(col) == defaults.get(col):
+            continue
+        reset = normalize_state({**state, col: defaults.get(col)})
+        p = float(MODELS[model].predict_proba(_row(reset))[0][target_idx])
+        delta = round(base_p - p, 4)
+        if abs(delta) < 0.005:
+            continue
+        out.append({"factor": feat_label(col), "delta": delta})
+    out.sort(key=lambda x: -abs(x["delta"]))
+    return out[:top]
+
+
 # ── API: predicción multi-modelo + incertidumbre ──────────────────────────
 def predict(features: dict, model: str = "todos") -> dict:
     state = normalize_state(features)
@@ -135,6 +178,8 @@ def predict(features: dict, model: str = "todos") -> dict:
         "clase_por_owners": (_class_from_owners(owners_est)),
         "incertidumbre": {"margen_top2": margen, "desacuerdo": desacuerdo,
                           "nivel": nivel, "modelo_ref": ref},
+        "explicacion": {"target": "Hit", "modelo": ref,
+                        "factores": _explain(state, ref, HIT_IDX)},
     }
 
 
