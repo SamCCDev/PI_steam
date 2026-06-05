@@ -7,7 +7,7 @@
 # MAGIC **Por qué scikit-learn y no PySpark ML:** Free Edition usa **serverless (Spark
 # MAGIC Connect)**, que **bloquea la MLlib clásica** de PySpark (`StringIndexer`,
 # MAGIC `LogisticRegression`, etc. no están whitelisted en Py4J). Como el dataset es
-# MAGIC pequeño (~3k filas), lo traemos a pandas y modelamos con scikit-learn en el
+# MAGIC pequeño (~8k filas en v2), lo traemos a pandas y modelamos con scikit-learn en el
 # MAGIC driver (consumo previsto en el Doc. Técnico §4.3).
 # MAGIC
 # MAGIC Lee `features_silver` de Unity Catalog y guarda los coeficientes (log-odds /

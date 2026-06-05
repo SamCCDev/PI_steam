@@ -395,7 +395,9 @@ Nada de v1 se modifica ni se borra.
 - 2026-06-03 — Documentación del estudio (`Documentacion del Estudio - Predictor v2.md`), README v2, y push de todos los commits a GitHub (bajo SamDev).
 - 2026-06-03 — **Explicabilidad por predicción**: `/api/predict` devuelve los factores que más mueven P(Hit) (contribución por perturbación, modelo-agnóstica); tarjeta nueva en el Simulador.
 - 2026-06-03 — **Modelo post-lanzamiento**: 3 modelos (`post_*.joblib`) que añaden señales de recepción (ccu, rating, metacritic, playtime). MLP 0.888 → **0.907 AUC**. Toggle "ya lancé / aún no" en el Simulador. Doc del estudio §5.5 actualizada.
-- _(siguiente: modo presentación guiado + pulido visual + integrar rediseño del frontend)_
+- 2026-06-03 — **Rediseño del frontend integrado** (commit `2e8de58`): nuevo `web/index.html` (estética Steam, terminal flotante estilo macOS, fuentes, animaciones) cableado al backend real (predict/recommend/similar/stats/games/game). Verificado headless con Playwright: las 5 vistas renderizan con datos reales, 0 errores JS. SPA anterior (`web/js`, `web/css`) eliminado.
+- 2026-06-03 — Notebooks **01-07 alineados a v2**: el 01 añade las categóricas nuevas (pub_experience/price_tier/release_quarter) y excluye las temporales → produce 12 num / 75 bool / 5 cat = 92 features (validado localmente); 02-07 las toman por ser schema-driven.
+- _(nota: el nuevo diseño aún no incluye la tarjeta de explicabilidad ni el toggle post-lanzamiento; quedan para integrar en el rediseño si se desea)_
 
 ---
 

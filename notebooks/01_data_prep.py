@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # 01 — Preparación de Datos (Unity Catalog)
 # MAGIC
-# MAGIC Lee el master `dataset_ml` (generado por `build_dataset.py` y subido como tabla),
+# MAGIC Lee el master `dataset_ml` (generado por `build_dataset_v2.py` y subido como tabla),
 # MAGIC selecciona las features PRE-lanzamiento de forma schema-driven, descarta columnas
 # MAGIC casi-constantes y guarda las tablas de trabajo en Unity Catalog.
 # MAGIC
@@ -10,7 +10,7 @@
 # MAGIC usan rutas de archivo: la entrada y las salidas son **tablas gestionadas de UC**.
 # MAGIC
 # MAGIC ### Cómo subir el dataset (una vez)
-# MAGIC 1. `build_dataset.py` genera `output/dataset_ml.csv`.
+# MAGIC 1. `build_dataset_v2.py` genera `output/dataset_ml.csv`.
 # MAGIC 2. En Databricks: **Catalog → (tu schema) → Create → Table → Upload file**.
 # MAGIC 3. Sube `dataset_ml.csv` y nómbrala `dataset_ml` (separador `;`).
 
@@ -48,7 +48,7 @@ print(f"{SOURCE_TABLE}: {df.count():,} filas, {len(df.columns)} columnas")
 
 # MAGIC %md
 # MAGIC ## 1. Garantizar la etiqueta multiclase `label` (0=Flop, 1=Rentable, 2=Hit)
-# MAGIC `build_dataset.py` ya la crea; este bloque la reconstruye solo si falta.
+# MAGIC `build_dataset_v2.py` ya la crea; este bloque la reconstruye solo si falta.
 
 # COMMAND ----------
 
@@ -65,19 +65,23 @@ display(df.groupBy("label").count().orderBy("label"))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. Selección schema-driven de features (mismos roles que `build_dataset.py`)
+# MAGIC ## 2. Selección schema-driven de features (mismos roles que `build_dataset_v2.py`)
 # MAGIC Excluye identificadores, objetivo y todo lo POST-lanzamiento (fuga de datos).
 
 # COMMAND ----------
 
 ID_COLS = {"appid", "name", "developer", "publisher", "release_date"}
-TARGET_COLS = {"owners_lower_bound", "ccu", "label"}
+TARGET_COLS = {"owners_lower_bound", "ccu", "label", "label_name"}
 # Outcome conocido solo TRAS el lanzamiento (fuga de datos para el simulador pre-lanzamiento)
 POSTLAUNCH_COLS = {"positive", "negative", "rating_porcentaje", "metacritic_score"}
+# v2: año/mes de lanzamiento se reservan para análisis, no son features (un juego futuro no los tiene)
+TEMPORAL_COLS = {"release_year", "release_month"}
 BOOL_PREFIXES = ("genre_", "cat_", "tag_", "platform_", "is_")
-CATEGORICAL_COLS = [c for c in ("controller_support", "dev_experience") if c in df.columns]
+# v2: se añaden pub_experience, price_tier y release_quarter como categóricas
+CATEGORICAL_COLS = [c for c in ("controller_support", "dev_experience",
+                                "pub_experience", "price_tier", "release_quarter") if c in df.columns]
 
-EXCLUDE = ID_COLS | TARGET_COLS | POSTLAUNCH_COLS
+EXCLUDE = ID_COLS | TARGET_COLS | POSTLAUNCH_COLS | TEMPORAL_COLS
 numeric_types = ("int", "bigint", "double", "float", "decimal")
 
 bool_feats, num_feats = [], []
@@ -98,7 +102,7 @@ print(f"Candidatas -> numéricas={len(num_feats)} booleanas={len(bool_feats)} ca
 
 # COMMAND ----------
 
-# Nota: en serverless NO se permite .cache()/persist. Con ~3k filas no hace falta.
+# Nota: en serverless NO se permite .cache()/persist. Con ~8k filas (7.817) no hace falta.
 n = df.count()
 dropped = []
 MAX_DOMINANT = 0.999
@@ -143,8 +147,8 @@ print(f"Descartadas por baja varianza ({len(dropped)}): {dropped}")
 
 # COMMAND ----------
 
-keep = (["appid", "name", "dev_experience", "controller_support", "owners_lower_bound", "label"]
-        + num_feats + bool_feats)
+keep = (["appid", "name", "owners_lower_bound", "label"]
+        + CATEGORICAL_COLS + num_feats + bool_feats)
 keep = [c for c in dict.fromkeys(keep) if c in df.columns]
 
 silver = df.select(*keep)
