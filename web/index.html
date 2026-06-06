@@ -555,7 +555,7 @@ select:focus{border-color:var(--accent-dim)}
         <button class="mode-btn active" data-mode="pres">Presentación</button>
         <button class="mode-btn" data-mode="quick">Quick</button>
       </div>
-      <div class="stat-pill"><span class="dot-live"></span> N = <span class="tnum" id="nGames">7 817</span></div>
+      <div class="stat-pill" title="juegos recolectados en el catálogo"><span class="dot-live"></span> N = <span class="tnum" id="nGames">—</span></div>
     </div>
   </header>
 
@@ -641,7 +641,7 @@ select:focus{border-color:var(--accent-dim)}
     <!-- ===== VIEW: ANALITICO ===== -->
     <section class="view" id="view-an" data-screen-label="Panel analítico">
       <div class="vhead"><div class="vtitle">Panel analítico
-        <span class="sub">Radiografía del dataset de entrenamiento · <span id="nGames2">7 817</span> juegos de Steam.</span></div>
+        <span class="sub" id="anSub">Radiografía del dataset · conectando con el backend…</span></div>
         <div class="legend" id="anLegend"></div>
       </div>
       <div class="grid" id="anGrid" style="grid-template-columns:repeat(12,1fr)"></div>
@@ -1591,7 +1591,7 @@ function buildAnGrid(){
   const grid=$('#anGrid'); grid.innerHTML='';
   defs.forEach(([id,title,span,h,hint])=>{
     const card=document.createElement('div'); card.className='panel'; card.style.gridColumn=span;
-    card.innerHTML=`<div class="panel-h"><h3>${title}</h3><span class="hint">${hint}</span></div>
+    card.innerHTML=`<div class="panel-h"><h3>${title}</h3><span class="hint" id="hint_${id}">${hint}</span></div>
       <div class="panel-b" style="padding:8px 10px 12px"><div id="${id}" style="width:100%;height:${h}px"></div></div>`;
     grid.appendChild(card);
   });
@@ -1614,6 +1614,10 @@ function renderAnalytic(){
   // y `marketTotal` por la suma real (counts.reduce((s,c)=>s+c.n,0)).
   const marketData = MOCK_STATS.market;
   const marketTotal = marketData.reduce((s,m)=>s+m.n,0);
+  // hints dinámicos: reflejan los conteos reales que llegaron del backend
+  const setHint=(id,t)=>{const el=document.getElementById(id); if(el)el.textContent=t;};
+  setHint('hint_anMarket',`clases sobre ${nf(marketTotal)} juegos con ventas estimables`);
+  setHint('hint_anScatter',`${nf(MOCK_STATS.scatter.length)} juegos (muestra) · escala log`);
   getChart('anMarket').setOption({tooltip:Object.assign({trigger:'item',formatter:p=>`${p.name}<br><b>${nf(p.value)}</b> juegos · ${p.percent}%`},TT),
     animationDuration:1100, animationEasing:'elasticOut', animationDelay:i=>i*120,
     // texto central fijo (evita que las 3 secciones encimen su etiqueta al hacer hover)
@@ -1892,8 +1896,14 @@ $('#btnSimular').addEventListener('click',()=>{
     MOCK_STATS.market=s.market; MOCK_STATS.price_hist=s.price_hist; MOCK_STATS.owners_by_genre=s.owners_by_genre;
     MOCK_STATS.importance=s.lr_importance; MOCK_STATS.metrics=s.metrics; MOCK_STATS.confusion=s.confusion;
     MOCK_STATS.scatter=s.scatter; MOCK_STATS.hit_by_quarter=s.hit_by_quarter; MOCK_STATS.n_total=s.n_total;
-    const ng=nf(s.n_total); ['nGames','nGames2'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent=ng;});
-    log('ok',`backend conectado · ${nf(s.n_total)} juegos · ${s.metrics._meta.features} features`);
+    MOCK_STATS.pipeline=s.pipeline||{};
+    // N del header = catálogo completo recolectado; el subtítulo desglosa el embudo de datos
+    const pl=MOCK_STATS.pipeline, nCat=pl.n_catalogo||s.n_total, nMeta=pl.n_metadata, nTrain=pl.n_train||s.n_total;
+    const ngEl=document.getElementById('nGames'); if(ngEl) ngEl.textContent=nf(nCat);
+    const subEl=document.getElementById('anSub');
+    if(subEl) subEl.textContent=`Radiografía del dataset · ${nf(nCat)} juegos recolectados`+
+      (nMeta?` · ${nf(nMeta)} con metadata completa (embudo)`:'')+` · ${nf(nTrain)} con ventas estimables (entrenamiento).`;
+    log('ok',`backend conectado · catálogo ${nf(nCat)} → metadata ${nMeta?nf(nMeta):'?'} → entrenables ${nf(nTrain)} · ${s.metrics._meta.features} features`);
   }catch(e){ log('warn','backend offline — datos de ejemplo (corre: python app/server.py)'); }
   await doRecompute();
   showView('an');

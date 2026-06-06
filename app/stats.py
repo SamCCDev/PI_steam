@@ -102,6 +102,27 @@ def _scatter(n=500):
     return pts
 
 
+def _pipeline_counts():
+    """Embudo de datos del proyecto: catálogo crudo recolectado → juegos con metadata
+    completa (universo de la etapa 1) → juegos con ventas estimables (entrenamiento).
+    Da contexto honesto al panel: los 3 clasificadores solo ven el último subconjunto."""
+    counts = {"n_catalogo": None, "n_metadata": None, "n_train": int(len(DF))}
+    try:
+        import pandas as pd
+        meta = pd.read_csv(OUTPUT_DIR / "games_metadata.csv", sep=";",
+                           usecols=["appid"], low_memory=False)
+        counts["n_catalogo"] = int(len(meta))
+    except Exception:
+        pass
+    p = REPORTS_DIR / "stage1.json"
+    if p.exists():
+        try:
+            counts["n_metadata"] = int(json.loads(p.read_text(encoding="utf-8"))["n_total"])
+        except Exception:
+            pass
+    return counts
+
+
 # Se calcula una vez al importar el módulo
 PAYLOAD = {
     "market": _market(),
@@ -113,6 +134,7 @@ PAYLOAD = {
     "scatter": _scatter(),
     "hit_by_quarter": _hit_by_quarter(),
     "n_total": int(len(DF)),
+    "pipeline": _pipeline_counts(),
 }
 
 
