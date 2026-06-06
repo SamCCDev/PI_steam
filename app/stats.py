@@ -88,17 +88,21 @@ def _hit_by_quarter():
             continue
         rows.append({"q": q, "n": int(len(sel)),
                      "pct_hit": round(float((sel["label"] == 2).mean()) * 100, 1),
-                     "pct_norentable": round(float((sel["label"] >= 1).mean()) * 100, 1)})
+                     # % de juegos que al menos recuperan inversión (Rentable o Hit)
+                     "pct_exito": round(float((sel["label"] >= 1).mean()) * 100, 1)})
     return rows
 
 
-def _scatter(n=500):
+def _scatter(n=1200):
+    """Muestra de juegos reales para el scatter precio/owners. Incluye el nombre
+    para que el tooltip identifique cada punto."""
     sample = DF.sample(min(n, len(DF)), random_state=7)
     pts = []
     for _, r in sample.iterrows():
         pts.append([round(float(r["price"]), 2),
                     int(r["owners_lower_bound"]),
-                    str(r["label_name"])])
+                    str(r["label_name"]),
+                    str(r["name"])])
     return pts
 
 

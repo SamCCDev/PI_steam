@@ -1624,10 +1624,17 @@ function renderAnalytic(){
   //   const marketData = counts.map(c => ({clase:c.clase, n:c.n}));
   // y `marketTotal` por la suma real (counts.reduce((s,c)=>s+c.n,0)).
   const marketData = MOCK_STATS.market;
-  const marketTotal = marketData.reduce((s,m)=>s+m.n,0);
+  const classTotal = marketData.reduce((s,m)=>s+m.n,0);
+  // El donut cuenta TODO el catálogo recolectado: las 3 clases comerciales (juegos con
+  // ventas estimables) + el resto sin datos de ventas (gris). Así el total coincide con N.
+  const plDon = MOCK_STATS.pipeline||{};
+  const nSinDatos = Math.max(0,(plDon.n_catalogo||classTotal)-classTotal);
+  const donutData = marketData.map(m=>({name:m.clase,value:m.n,itemStyle:{color:CLASS_COLOR[m.clase]}}));
+  if(nSinDatos>0) donutData.push({name:'Sin datos de ventas',value:nSinDatos,itemStyle:{color:'rgba(90,108,128,.45)'}});
+  const marketTotal = classTotal + nSinDatos;
   // hints dinámicos: reflejan los conteos reales que llegaron del backend
   const setHint=(id,t)=>{const el=document.getElementById(id); if(el)el.textContent=t;};
-  setHint('hint_anMarket',`clases sobre ${nf(marketTotal)} juegos con ventas estimables`);
+  setHint('hint_anMarket',nSinDatos>0?`${nf(classTotal)} con ventas estimables · ${nf(nSinDatos)} sin datos`:`clases sobre ${nf(classTotal)} juegos con ventas estimables`);
   setHint('hint_anScatter',`${nf(MOCK_STATS.scatter.length)} juegos (muestra) · escala log`);
   getChart('anMarket').setOption({tooltip:Object.assign({trigger:'item',formatter:p=>`${p.name}<br><b>${nf(p.value)}</b> juegos · ${p.percent}%`},TT),
     animationDuration:1100, animationEasing:'elasticOut', animationDelay:i=>i*120,
@@ -1640,7 +1647,7 @@ function renderAnalytic(){
         style:{text:nf(marketTotal),fill:COL.text,fontSize:27,fontWeight:'bold',
           fontFamily:'Rajdhani',textAlign:'center',textVerticalAlign:'middle'}},
       {type:'text',left:'center',top:'55%',z:10,
-        style:{text:'juegos clasificados',fill:COL.muted,fontSize:10.5,
+        style:{text:nSinDatos>0?'juegos recolectados':'juegos clasificados',fill:COL.muted,fontSize:10.5,
           fontFamily:'IBM Plex Sans',textAlign:'center',textVerticalAlign:'middle'}}
     ]},
     series:[{type:'pie',radius:['56%','82%'],center:['50%','50%'],avoidLabelOverlap:false,
@@ -1648,22 +1655,30 @@ function renderAnalytic(){
       label:{show:false}, labelLine:{show:false},
       emphasis:{scale:true,scaleSize:7,label:{show:false},
         itemStyle:{shadowBlur:16,shadowColor:'rgba(0,0,0,.5)'}},
-      data:marketData.map(m=>({name:m.clase,value:m.n,itemStyle:{color:CLASS_COLOR[m.clase]}}))}]});
-  // price hist
-  getChart('anPrice').setOption({grid:{top:18,left:46,right:14,bottom:30},tooltip:Object.assign({trigger:'axis',axisPointer:{type:'shadow'}},TT),
+      data:donutData}]});
+  // price hist — resalta en blanco el rango donde cae el precio del juego simulado
+  const PRICE_BINS=[0,5,10,15,20,30,40,60,Infinity];
+  const uPrice=state.numeric.price||0;
+  let uBin=PRICE_BINS.findIndex((b,i)=>i<PRICE_BINS.length-1&&uPrice>=b&&uPrice<PRICE_BINS[i+1]); if(uBin<0)uBin=PRICE_BINS.length-2;
+  getChart('anPrice').setOption({grid:{top:18,left:46,right:14,bottom:30},tooltip:Object.assign({trigger:'axis',axisPointer:{type:'shadow'},
+      formatter:ps=>{const p=ps[0];return `${p.name}: <b>${nf(p.value)}</b> juegos${p.dataIndex===uBin?' · <b>← tu juego ($'+uPrice+')</b>':''}`;}},TT),
     xAxis:Object.assign({type:'category',data:MOCK_STATS.price_hist.labels},axBase,{axisLabel:{color:COL.muted,fontSize:10.5}}),
     yAxis:Object.assign({type:'value'},axBase),
-    series:[{type:'bar',data:MOCK_STATS.price_hist.counts,barWidth:'62%',...stagger(55),
+    series:[{type:'bar',data:MOCK_STATS.price_hist.counts.map((v,i)=>i===uBin?{value:v,itemStyle:{color:'#fff',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',formatter:'Tu juego',color:'#fff',fontSize:10,fontWeight:'bold'}}:v),barWidth:'62%',...stagger(55),
       itemStyle:{borderRadius:[4,4,0,0],color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#7fd0ff'},{offset:1,color:'#3a7da3'}])},
       emphasis:{itemStyle:{color:COL.accent}}}]});
-  // owners by genre (sorted desc)
+  // owners by genre (sorted desc) — los géneros activos en tu configuración se pintan en verde
   const g=[...MOCK_STATS.owners_by_genre].sort((a,b)=>b.owners_mediana-a.owners_mediana);
+  const myGenres=new Set((MOCK_CONFIG.groups.genre||[]).filter(it=>state.flags[it.col]).map(it=>it.label.toLowerCase()));
+  setHint('hint_anGenre','mediana de owners + tasa de Hit · en verde: géneros de tu juego');
   getChart('anGenre').setOption({grid:{top:24,left:62,right:48,bottom:64},tooltip:Object.assign({trigger:'axis',axisPointer:{type:'shadow'}},TT),
     legend:{data:['Owners (mediana)','% Hit'],textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
-    xAxis:Object.assign({type:'category',data:g.map(x=>x.genero)},axBase,{axisLabel:{color:COL.muted,fontSize:10,rotate:38,interval:0}}),
+    xAxis:Object.assign({type:'category',data:g.map(x=>x.genero)},axBase,{axisLabel:{color:COL.muted,fontSize:10,rotate:38,interval:0,
+      formatter:v=>myGenres.has(v.toLowerCase())?`{mine|${v}}`:v,rich:{mine:{color:COL.hit,fontWeight:'bold',fontSize:10}}}}),
     yAxis:[Object.assign({type:'value',name:'owners',nameTextStyle:{color:COL.muted}},axBase,{axisLabel:{color:COL.muted,fontSize:10,formatter:v=>ownersFmt(v)}}),
            Object.assign({type:'value',name:'% Hit',position:'right',max:35},axBase,{splitLine:{show:false},axisLabel:{color:COL.muted,fontSize:10,formatter:'{value}%'}})],
-    series:[{name:'Owners (mediana)',type:'bar',data:g.map(x=>x.owners_mediana),barWidth:'52%',...stagger(45),
+    series:[{name:'Owners (mediana)',type:'bar',data:g.map(x=>myGenres.has(x.genero.toLowerCase())?{value:x.owners_mediana,itemStyle:{color:'rgba(164,208,7,.7)',borderRadius:[3,3,0,0]}}:x.owners_mediana),barWidth:'52%',...stagger(45),
         itemStyle:{borderRadius:[3,3,0,0],color:'rgba(102,192,244,.55)'},emphasis:{itemStyle:{color:COL.accent}}},
       {name:'% Hit',type:'line',yAxisIndex:1,data:g.map(x=>x.pct_hit),smooth:true,symbol:'circle',symbolSize:7,
         lineStyle:{color:COL.hit,width:2.5},itemStyle:{color:COL.hit}}]});
@@ -1677,16 +1692,20 @@ function renderAnalytic(){
       label:{show:true,position:'right',color:COL.muted,fontSize:9.5,formatter:p=>(p.value>0?'+':'')+p.value,
         align:'left'}}]});
   // scatter — entrada con escala desde el centro
-  const sBy={Flop:[],Rentable:[],Hit:[]}; MOCK_STATS.scatter.forEach(([pr,ow,cl])=>sBy[cl].push([pr,ow]));
+  // scatter: cada punto lleva el nombre real del juego (4º elemento desde el backend)
+  const sBy={Flop:[],Rentable:[],Hit:[]}; MOCK_STATS.scatter.forEach(([pr,ow,cl,nm])=>sBy[cl].push([pr,ow,nm]));
   // "Tu juego": ubica el juego simulado (precio real vs owners estimados) sobre el mercado.
   // Sin cap de precio: si el usuario pone $200, el punto se ve lejos a la derecha (y abajo
   // en owners, porque la penalización por sobreprecio recorta el alcance).
   const userPrice = state.numeric.price||0;
   const userPt = (LAST && LAST.owners) ? [[userPrice, Math.max(LAST.owners,1)]] : [];
   const xMax = Math.max(70, Math.ceil(userPrice/10)*10);  // el eje se expande para encuadrar "Tu juego"
+  const tuDet = (LAST&&LAST.consenso)?` · ${LAST.consenso.clase} · P(Hit) ${Math.round((LAST.consenso.probs.Hit||0)*100)}%`:'';
   getChart('anScatter').setOption({grid:{top:18,left:54,right:18,bottom:34},
     animationDuration:900,animationEasing:'cubicOut',
-    tooltip:Object.assign({trigger:'item',formatter:p=>p.seriesName==='Tu juego'?`<b>Tu juego</b><br>$${p.value[0]} · ${ownersFmt(p.value[1])} owners est.`:`$${p.value[0]} · <b>${ownersFmt(p.value[1])}</b> owners`},TT),
+    tooltip:Object.assign({trigger:'item',formatter:p=>p.seriesName==='Tu juego'
+      ?`<b>Tu juego</b><br>$${p.value[0]} · ${ownersFmt(p.value[1])} owners est.${tuDet}`
+      :`${p.value[2]?'<b>'+p.value[2]+'</b><br>':''}$${p.value[0]} · <b>${ownersFmt(p.value[1])}</b> owners · ${p.seriesName}`},TT),
     legend:{data:[...CLASSES,'Tu juego'],textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
     xAxis:Object.assign({type:'value',name:'precio ($)',nameTextStyle:{color:COL.muted},max:xMax},axBase),
     yAxis:Object.assign({type:'log',name:'owners',nameTextStyle:{color:COL.muted}},axBase,{axisLabel:{color:COL.muted,fontSize:10,formatter:v=>ownersFmt(v)}}),
@@ -1705,15 +1724,22 @@ function renderAnalytic(){
     visualMap:{min:0,max:mx,show:false,inRange:{color:['#16202d','#1f4a63','#66c0f4']}},
     series:[{type:'heatmap',data,label:{show:true,color:'#08151f',fontWeight:'bold',fontSize:13,formatter:p=>nf(p.value[2])},
       itemStyle:{borderColor:COL.panel,borderWidth:3},emphasis:{itemStyle:{shadowBlur:8,shadowColor:'rgba(0,0,0,.5)'}}}]});
-  // hit by quarter
+  // hit by quarter — la línea es "% Rentable o Hit" (label>=1; antes estaba mal etiquetada
+  // como "% no-Rentable"). La barra del trimestre elegido en el simulador se pinta blanca.
   const q=MOCK_STATS.hit_by_quarter;
-  getChart('anQuarter').setOption({grid:{top:24,left:44,right:46,bottom:28},tooltip:Object.assign({trigger:'axis'},TT),
-    legend:{data:['% Hit','% no-Rentable'],textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
+  const uQ=(state.cats.release_quarter||'').toUpperCase();
+  setHint('hint_anQuarter','estacionalidad de lanzamiento · barra blanca: tu trimestre');
+  getChart('anQuarter').setOption({grid:{top:24,left:44,right:46,bottom:28},
+    tooltip:Object.assign({trigger:'axis',formatter:ps=>{const x=q[ps[0].dataIndex];
+      return `<b>${x.q}</b>${x.q===uQ?' · tu trimestre':''} · ${x.n?nf(x.n)+' juegos':''}<br>% Hit: <b>${x.pct_hit}%</b><br>% Rentable o Hit: <b>${x.pct_exito??x.pct_norentable}%</b>`;}},TT),
+    legend:{data:['% Hit','% Rentable o Hit'],textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
     xAxis:Object.assign({type:'category',data:q.map(x=>x.q)},axBase),
     yAxis:[Object.assign({type:'value',max:30,name:'% Hit',nameTextStyle:{color:COL.muted}},axBase,{axisLabel:{color:COL.muted,formatter:'{value}%'}}),
            Object.assign({type:'value',min:40,max:65,position:'right'},axBase,{splitLine:{show:false},axisLabel:{color:COL.muted,formatter:'{value}%'}})],
-    series:[{name:'% Hit',type:'bar',data:q.map(x=>x.pct_hit),barWidth:'38%',...stagger(90),itemStyle:{borderRadius:[4,4,0,0],color:COL.hit}},
-      {name:'% no-Rentable',type:'line',yAxisIndex:1,data:q.map(x=>x.pct_norentable),smooth:true,symbol:'circle',symbolSize:7,lineStyle:{color:COL.flop,width:2.5},itemStyle:{color:COL.flop}}]});
+    series:[{name:'% Hit',type:'bar',data:q.map(x=>x.q===uQ?{value:x.pct_hit,itemStyle:{color:'#fff',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',formatter:'Tu juego',color:'#fff',fontSize:10,fontWeight:'bold'}}:x.pct_hit),
+        barWidth:'38%',...stagger(90),itemStyle:{borderRadius:[4,4,0,0],color:COL.hit}},
+      {name:'% Rentable o Hit',type:'line',yAxisIndex:1,data:q.map(x=>x.pct_exito??x.pct_norentable),smooth:true,symbol:'circle',symbolSize:7,lineStyle:{color:COL.flop,width:2.5},itemStyle:{color:COL.flop}}]});
 }
 
 /* ============================================================ VIEW: Comparar modelos */
