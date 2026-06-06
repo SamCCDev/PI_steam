@@ -53,6 +53,11 @@ POST_LABELS = {"ccu": "Jugadores concurrentes (pico)", "rating_porcentaje": "% r
                "metacritic_score": "Nota Metacritic", "ts_positive_ratio": "Proporción positiva",
                "ts_avg_playtime_hrs": "Horas jugadas (prom.)", "ts_months_active": "Meses activo"}
 
+# Nota: se probó un modelo en 2 etapas (tracción → clase) con `train_stage1.py`, pero la
+# etapa de tracción resultó confundida por la metodología de recolección (owners>0 vino del
+# crawl de SteamSpy y owners==0 del catálogo, con metadata poblada de forma distinta). Por eso
+# NO se integra al producto; queda documentado como hallazgo en la documentación del estudio.
+
 DF = pd.read_csv(OUTPUT_DIR / "dataset_ml.csv", sep=";")
 PREVALENCE = {c: float(DF[c].mean()) for c in BOOL_FEATS}
 

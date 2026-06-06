@@ -146,6 +146,28 @@ Con esas señales el AUC del perceptrón sube de 0,888 a 0,907. La lectura es di
 un margen de incertidumbre que solo se cierra cuando llegan los primeros datos de cómo lo recibe el público. El
 dashboard refleja esto con un interruptor "aún no lo lancé / ya lo lancé" que alterna entre ambos modelos.
 
+### 5.6 Intento de modelo en dos etapas y hallazgo metodológico
+
+Se exploró un enfoque de embudo en dos etapas: una primera etapa que estimara si el juego logra tracción
+comercial (que SteamSpy reporte propietarios) sobre los 32.959 juegos del catálogo, y una segunda condicionada
+a esa tracción que predijera Flop/Rentable/Hit. La intención era aprovechar todos los datos, no solo los 7.817
+con ventas estimadas.
+
+La etapa de tracción alcanzó un AUC de 0,96, aparentemente excelente. El análisis de sus coeficientes reveló el
+problema: el predictor más fuerte era `platform_windows` (peso ≈ −9,3), seguido de la ausencia de fecha de
+lanzamiento. Esas variables no miden la calidad del juego sino la **forma en que se recolectaron los datos**: el
+subconjunto con ventas provino del crawl de SteamSpy y el subconjunto sin ventas del catálogo de Steam, y cada
+fuente pobló de manera distinta campos como plataformas, fecha, cartas de intercambio, DLCs o requisitos de RAM.
+Al quitar las dos variables más sospechosas el AUC apenas bajó a 0,94 y otras del mismo tipo ocuparon su lugar,
+lo que confirma que la separación se apoya en artefactos de recolección y no en señales comerciales reales.
+
+Por eso se descartó el embudo para el producto: una configuración típica colapsaba a ~2 % de probabilidad de
+tracción (≈98 % "sin tracción"), un resultado poco fiable e inútil como simulador. Se mantiene el modelo de una
+sola etapa entrenado sobre los juegos con ventas. Separar tracción de magnitud de forma limpia requeriría una
+señal pre-lanzamiento independiente del método de recolección (por ejemplo, listas de deseos), que aquí no
+existe. El intento se conserva por su valor metodológico: un AUC alto puede esconder un sesgo de recolección, y
+conviene auditar los coeficientes antes de confiar en la métrica.
+
 ## 6. Ingeniería de datos
 
 El proyecto incorpora tres técnicas vistas en la asignatura de Ingeniería de Datos, aplicadas al conjunto de

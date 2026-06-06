@@ -33,3 +33,6 @@ output/steamspy_cache.json
 
 # Salidas regenerables del apartado de ingeniería de datos
 ingenieria_datos/output/
+
+# Dataset del experimento de 2 etapas (regenerable con train_stage1.py)
+output/dataset_stage1.csv
