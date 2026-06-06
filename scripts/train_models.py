@@ -41,9 +41,10 @@ from sklearn.metrics import (roc_auc_score, f1_score, accuracy_score,
 from sklearn.base import clone
 import joblib
 
-OUTPUT_DIR = Path("output")
-MODELS_DIR = Path("models")
-REPORTS_DIR = Path("reports")
+ROOT = Path(__file__).resolve().parent.parent   # raíz del repo (scripts/ está un nivel adentro)
+OUTPUT_DIR = ROOT / "output"
+MODELS_DIR = ROOT / "models"
+REPORTS_DIR = ROOT / "reports"
 MODELS_DIR.mkdir(exist_ok=True)
 REPORTS_DIR.mkdir(exist_ok=True)
 

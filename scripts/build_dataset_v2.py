@@ -29,7 +29,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-OUTPUT_DIR = Path("output")
+ROOT = Path(__file__).resolve().parent.parent   # raíz del repo (scripts/ está un nivel adentro)
+OUTPUT_DIR = ROOT / "output"
 SEP = ";"
 
 # Clasificación multiclase del éxito comercial (Softmax). Cortes en buckets reales de SteamSpy:

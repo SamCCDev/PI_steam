@@ -32,8 +32,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # CONFIGURACIÓN GLOBAL
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Directorio donde se guardarán los CSVs finales
-OUTPUT_DIR = Path("output")
+# Directorio donde se guardarán los CSVs finales (anclado a la raíz del repo)
+ROOT = Path(__file__).resolve().parent.parent
+OUTPUT_DIR = ROOT / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ── Rate Limiting ──────────────────────────────────────────────────────────
@@ -53,9 +54,9 @@ START_TIMESTAMP = 1704067200
 
 import os
 # Cargar variables de entorno desde .env si existe
-if Path(".env").exists():
+if (ROOT / ".env").exists():
     try:
-        with open(".env", encoding="utf-8") as f:
+        with open(ROOT / ".env", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:

@@ -33,9 +33,10 @@ import joblib
 
 import build_dataset_v2 as bd   # reutiliza los helpers de derivación
 
-OUTPUT_DIR = Path("output")
-MODELS_DIR = Path("models")
-REPORTS_DIR = Path("reports")
+ROOT = Path(__file__).resolve().parent.parent   # raíz del repo (scripts/ está un nivel adentro)
+OUTPUT_DIR = ROOT / "output"
+MODELS_DIR = ROOT / "models"
+REPORTS_DIR = ROOT / "reports"
 MODELS_DIR.mkdir(exist_ok=True); REPORTS_DIR.mkdir(exist_ok=True)
 SEED = 42
 
