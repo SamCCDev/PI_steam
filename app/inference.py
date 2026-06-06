@@ -134,8 +134,10 @@ def normalize_state(features: dict) -> dict:
     s["num_categories"] = sum(int(s.get(c, 0)) for c in BOOL_FEATS if c.startswith("cat_"))
     if "is_early_access" in s:
         s["is_early_access"] = int(bool(s.get("genre_early_access", 0)) or bool(s.get("tag_early_access", 0)))
-    # price_tier coherente con el precio si el usuario movió el precio pero no el tier
-    price = float(s.get("price", 0) or 0)
+    # Cap realista del precio: el dataset llega a $200 (outliers) pero p99=$50; por encima
+    # de ~$70 el modelo extrapola y dispara P(Hit) de forma artificial. Se limita la entrada.
+    price = min(max(float(s.get("price", 0) or 0), 0.0), 70.0)
+    s["price"] = price
     s["price_tier"] = ("F2P" if price <= 0 else "Budget" if price < 10 else "Mid" if price < 20 else "Premium")
     return s
 

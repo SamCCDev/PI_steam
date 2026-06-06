@@ -555,7 +555,7 @@ select:focus{border-color:var(--accent-dim)}
         <button class="mode-btn active" data-mode="pres">Presentación</button>
         <button class="mode-btn" data-mode="quick">Quick</button>
       </div>
-      <div class="stat-pill"><span class="dot-live"></span> N = <span class="tnum">7 817</span></div>
+      <div class="stat-pill"><span class="dot-live"></span> N = <span class="tnum" id="nGames">7 817</span></div>
     </div>
   </header>
 
@@ -568,9 +568,9 @@ select:focus{border-color:var(--accent-dim)}
         <div class="vtitle">Simulador de proyecto
           <span class="sub">Configura un juego hipotético y observa la predicción combinada de los 3 modelos.</span>
         </div>
-        <button class="btn btn-primary" id="btnSimular">
+        <button class="btn btn-primary" id="btnSimular" title="Restablecer todos los parámetros a la configuración por defecto">
           <svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
-          Recalcular
+          Reiniciar
         </button>
       </div>
       <div class="sim-layout">
@@ -641,7 +641,7 @@ select:focus{border-color:var(--accent-dim)}
     <!-- ===== VIEW: ANALITICO ===== -->
     <section class="view" id="view-an" data-screen-label="Panel analítico">
       <div class="vhead"><div class="vtitle">Panel analítico
-        <span class="sub">Radiografía del dataset de entrenamiento · 7 817 juegos de Steam.</span></div>
+        <span class="sub">Radiografía del dataset de entrenamiento · <span id="nGames2">7 817</span> juegos de Steam.</span></div>
         <div class="legend" id="anLegend"></div>
       </div>
       <div class="grid" id="anGrid" style="grid-template-columns:repeat(12,1fr)"></div>
@@ -722,7 +722,7 @@ const MOCK_CONFIG = {
   thresholds: { flop_max: 200000, hit_min: 1000000 },
   models: ["lr","svm","mlp"],
   numeric: {
-    price:               { median:5.79, min:0,  max:200, step:0.99, label:"Precio ($)",         fmt:"usd" },
+    price:               { median:5.79, min:0,  max:70,  step:0.99, label:"Precio ($)",         fmt:"usd" },
     supported_languages: { median:3,    min:1,  max:30,  step:1,    label:"Idiomas soportados" },
     total_achievements:  { median:24,   min:0,  max:500, step:1,    label:"Logros" },
     total_dlcs:          { median:0,    min:0,  max:40,  step:1,    label:"DLCs" },
@@ -962,7 +962,10 @@ const COL={bg:'#171a21',panel:'#16202d',border:'#2a475e',borderSoft:'#22384b',ac
 /* ---------- estado ---------- */
 const ALL_GROUPS=['genre','cat','tag','platform'];
 const state={ numeric:{}, flags:{}, cats:{} };
-(function initState(){
+function resetState(){
+  for(const k in state.numeric) delete state.numeric[k];
+  for(const k in state.flags) delete state.flags[k];
+  for(const k in state.cats) delete state.cats[k];
   for(const [k,p] of Object.entries(MOCK_CONFIG.numeric)) state.numeric[k]=p.median;
   Object.assign(state.numeric,{price:14.99,supported_languages:8,total_achievements:40,total_dlcs:2});
   for(const b of MODEL.boolean) state.flags[b]=0;
@@ -973,7 +976,8 @@ const state={ numeric:{}, flags:{}, cats:{} };
   ].forEach(c=>{if(c in state.flags)state.flags[c]=1;});
   for(const [k,info] of Object.entries(MOCK_CONFIG.categorical)) state.cats[k]=info.default;
   state.cats.dev_experience='Establecido';
-})();
+}
+resetState();
 let LAST=null;
 
 /* ============================================================ BACKEND REAL
@@ -1658,14 +1662,19 @@ function renderAnalytic(){
         align:'left'}}]});
   // scatter — entrada con escala desde el centro
   const sBy={Flop:[],Rentable:[],Hit:[]}; MOCK_STATS.scatter.forEach(([pr,ow,cl])=>sBy[cl].push([pr,ow]));
+  // "Tu juego": ubica el juego simulado (precio vs owners estimados) sobre el mercado
+  const userPt = (LAST && LAST.owners) ? [[Math.min(state.numeric.price||0,70), Math.max(LAST.owners,1)]] : [];
   getChart('anScatter').setOption({grid:{top:18,left:54,right:18,bottom:34},
     animationDuration:900,animationEasing:'cubicOut',
-    tooltip:Object.assign({trigger:'item',formatter:p=>`$${p.value[0]} · <b>${ownersFmt(p.value[1])}</b> owners`},TT),
-    legend:{data:CLASSES,textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
-    xAxis:Object.assign({type:'value',name:'precio ($)',nameTextStyle:{color:COL.muted},max:60},axBase),
+    tooltip:Object.assign({trigger:'item',formatter:p=>p.seriesName==='Tu juego'?`<b>Tu juego</b><br>$${p.value[0]} · ${ownersFmt(p.value[1])} owners est.`:`$${p.value[0]} · <b>${ownersFmt(p.value[1])}</b> owners`},TT),
+    legend:{data:[...CLASSES,'Tu juego'],textStyle:{color:COL.muted,fontSize:11},top:0,right:0},
+    xAxis:Object.assign({type:'value',name:'precio ($)',nameTextStyle:{color:COL.muted},max:70},axBase),
     yAxis:Object.assign({type:'log',name:'owners',nameTextStyle:{color:COL.muted}},axBase,{axisLabel:{color:COL.muted,fontSize:10,formatter:v=>ownersFmt(v)}}),
-    series:CLASSES.map(c=>({name:c,type:'scatter',data:sBy[c],symbolSize:6,animationDelay:i=>i*3,
-      itemStyle:{color:CLASS_COLOR[c],opacity:.55,borderColor:'rgba(0,0,0,.2)'}}))});
+    series:[...CLASSES.map(c=>({name:c,type:'scatter',data:sBy[c],symbolSize:6,animationDelay:i=>i*3,
+      itemStyle:{color:CLASS_COLOR[c],opacity:.5,borderColor:'rgba(0,0,0,.2)'}})),
+      {name:'Tu juego',type:'scatter',data:userPt,symbol:'diamond',symbolSize:22,z:10,
+       itemStyle:{color:'#fff',borderColor:'#0b0e14',borderWidth:2,shadowBlur:12,shadowColor:'rgba(255,255,255,.7)'},
+       label:{show:userPt.length>0,formatter:'Tu juego',position:'top',color:'#fff',fontSize:11,fontWeight:'bold'}}]});
   // confusion
   const cm=MOCK_STATS.confusion.mlp, lab=cm.labels, data=[]; let mx=0;
   cm.matrix.forEach((row,i)=>row.forEach((v,j)=>{data.push([j,lab.length-1-i,v]); if(v>mx)mx=v;}));
@@ -1862,6 +1871,13 @@ $('#modeSwitch').addEventListener('click',e=>{
   setTimeout(()=>resizeView(activeView),80);
 });
 
+/* ---------- botón Reiniciar (restablece parámetros por defecto) ---------- */
+$('#btnSimular').addEventListener('click',()=>{
+  resetState(); buildInputs();
+  log('sys','parámetros reiniciados a la configuración por defecto');
+  doRecompute();
+});
+
 /* ============================================================ INIT */
 (async function init(){
   buildInputs();
@@ -1871,6 +1887,7 @@ $('#modeSwitch').addEventListener('click',e=>{
     MOCK_STATS.market=s.market; MOCK_STATS.price_hist=s.price_hist; MOCK_STATS.owners_by_genre=s.owners_by_genre;
     MOCK_STATS.importance=s.lr_importance; MOCK_STATS.metrics=s.metrics; MOCK_STATS.confusion=s.confusion;
     MOCK_STATS.scatter=s.scatter; MOCK_STATS.hit_by_quarter=s.hit_by_quarter; MOCK_STATS.n_total=s.n_total;
+    const ng=nf(s.n_total); ['nGames','nGames2'].forEach(id=>{const el=document.getElementById(id); if(el)el.textContent=ng;});
     log('ok',`backend conectado · ${nf(s.n_total)} juegos · ${s.metrics._meta.features} features`);
   }catch(e){ log('warn','backend offline — datos de ejemplo (corre: python app/server.py)'); }
   await doRecompute();
