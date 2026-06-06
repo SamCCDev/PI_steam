@@ -56,7 +56,8 @@ def _lr_importance():
     if not p.exists():
         return {"positivos": [], "negativos": []}
     coef = json.loads(p.read_text(encoding="utf-8"))["coef"]["Hit"]
-    items = sorted(coef.items(), key=lambda kv: kv[1])
+    # Se omite la categoría 'Desconocido' (fecha faltante): es un artefacto, no una decisión de diseño.
+    items = sorted(((k, v) for k, v in coef.items() if "Desconocido" not in k), key=lambda kv: kv[1])
     def clean(name):
         return inf.pretty_label(name) if any(name.startswith(x) for x in
                ("genre_", "cat_", "tag_", "platform_", "is_")) else name.replace("_", " ")

@@ -12,7 +12,7 @@
     models/feature_schema.json      Roles, defaults, categorías, umbrales, prior global
     reports/metrics.json            AUC/F1/accuracy por modelo + balance
     reports/confusion_<modelo>.json Matriz de confusión 3x3 por modelo
-    output/model_web.json           Export del LR para el fallback estático (v1)
+    output/model_web.json           Coeficientes LR (los usa el panel analítico para la importancia)
 
   Corre IGUAL en la laptop (`python train_models.py`) y en un notebook Databricks
   (ver notebooks/08_train_all.py). Es la fuente única de los artefactos del backend.
@@ -200,7 +200,7 @@ def main():
     (REPORTS_DIR / "metrics.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # ── Export del LR para el fallback estático (no toca el HTML) ───────────
+    # ── Coeficientes LR -> output/model_web.json (lo usa stats.py para la importancia) ─
     export_lr_web(df, num_feats, bool_feats, cat_feats)
 
     print("\n" + "=" * 64)
@@ -214,7 +214,7 @@ def main():
 
 
 def export_lr_web(df, num_feats, bool_feats, cat_feats):
-    """Replica export_model_web.py con el set de features v2 (para el fallback estático)."""
+    """Genera output/model_web.json (coeficientes LR) que consume el panel analítico (importancia de variables)."""
     pre = make_preprocessor(num_feats, bool_feats, cat_feats)
     model = Pipeline([("pre", pre),
                       ("clf", LogisticRegression(class_weight="balanced", max_iter=2000))])

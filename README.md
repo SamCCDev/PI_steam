@@ -5,11 +5,10 @@ videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hi
 datos de Steam/SteamSpy, un pipeline de entrenamiento reproducible y un **dashboard interactivo con backend
 local** (estética Steam) que compara tres modelos, explica sus predicciones y recomienda mejoras.
 
-> **Dos versiones conviven en el repo:**
-> - **v2 (actual):** dashboard con backend (`app/` + `web/`), 3 modelos comparables, 7.817 juegos. Es lo principal.
-> - **v1 (la prueba):** dashboard estático de una sola página con el modelo embebido (`steampredict_dashboard_comercial.html`). Se conserva como contexto y *fallback* offline.
->
-> El plan/bitácora vivo está en [`Plan v2 - Dashboard Comercial Customizable.md`](Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) y la documentación académica en [`Documentacion del Estudio - Predictor v2.md`](Documentacion%20del%20Estudio%20-%20Predictor%20v2.md).
+> Documentación del proyecto:
+> - [`Documento Tecnico - Predictor de Videojuegos.md`](Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación original (objetivo, arquitectura, diccionario).
+> - [`Plan v2 - Dashboard Comercial Customizable.md`](Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) — plan y bitácora de desarrollo.
+> - [`Documentacion del Estudio - Predictor v2.md`](Documentacion%20del%20Estudio%20-%20Predictor%20v2.md) — informe metodológico y de resultados.
 
 ---
 
@@ -27,9 +26,9 @@ python app/server.py
 Abre **http://127.0.0.1:8000**. Los modelos entrenados (`models/*.joblib`) ya vienen en el repo, así que el
 dashboard funciona sin reentrenar y **sin conexión a internet**.
 
-El dashboard tiene 5 vistas: **Simulador** (predicción + incertidumbre), **Comparar modelos** (LR/SVM/MLP lado
-a lado), **Juegos del mismo camino** (vecinos reales), **Recomendaciones** (mejor paquete de cambios para subir
-P(Hit)) y **Panel analítico** (gráficos del mercado).
+El dashboard tiene 5 vistas: **Simulador** (embudo de 2 etapas + predicción + incertidumbre), **Comparar
+modelos** (LR/SVM/MLP lado a lado), **Juegos del mismo camino** (vecinos reales), **Recomendaciones** (mejor
+paquete de cambios para subir P(Hit)) y **Panel analítico** (gráficos del mercado).
 
 ---
 
@@ -53,22 +52,20 @@ El mismo entrenamiento corre en **Databricks** (`notebooks/08_train_all.py`) par
 ```text
 ├── steam_etl.py                  # ETL concurrente (Steam Storefront + SteamSpy + Reviews)
 ├── build_dataset_v2.py           # Consolida los 4 CSV en el master ML-ready (features v2)
-├── train_models.py               # Entrena y serializa todos los modelos (fuente de los .joblib)
-├── export_model_web.py           # Exporta la LR a JSON para el dashboard estático v1
-├── embed_model_in_html.py        # Inyecta ese JSON en el HTML v1
+├── train_models.py               # Entrena y serializa los modelos (LR/SVM/MLP, owners, NN) -> models/
+├── train_stage1.py               # Etapa 1 del embudo: modelo de tracción (datos filtrados)
 ├── app/                          # Backend (Python stdlib, sin dependencias)
 │   ├── server.py                 #   http.server + router de endpoints
-│   ├── inference.py              #   carga de modelos, predict, recommend, similar
+│   ├── inference.py              #   carga de modelos, predict, recommend, similar, embudo
 │   └── stats.py                  #   agregados para el panel analítico
-├── web/                          # Frontend SPA (estética Steam)
-│   ├── index.html  css/  js/     #   app.js, charts.js (ECharts), api.js
-│   └── vendor/ -> ../vendor/     #   tailwind.js, lucide.js, echarts.min.js (offline)
-├── models/                       # *.joblib + feature_schema.json (artefactos del backend)
-├── reports/                      # metrics.json, confusion_*.json
-├── notebooks/                    # Databricks: 01–07 (v1) + 08_train_all (v2 consolidado)
+├── web/                          # Frontend (una sola página, estética Steam)
+│   └── index.html                #   dashboard completo (HTML + CSS + JS inline, ECharts)
+├── vendor/                       # tailwind.js, lucide.js, echarts.min.js (offline)
+├── models/                       # *.joblib + feature_schema.json + stage1.joblib
+├── reports/                      # metrics.json, confusion_*.json, stage1.json
+├── notebooks/                    # Databricks: 01–08 (08 = entrenamiento v2 consolidado)
 ├── ingenieria_datos/             # Apartado del curso: anonimización SHA-256 + Spark RDD
-├── output/                       # Datasets (CSV, separador ';')
-└── steampredict_dashboard_comercial.html   # Dashboard estático v1 (la prueba)
+└── output/                       # Datasets (CSV, separador ';')
 ```
 
 ---
@@ -78,7 +75,8 @@ El mismo entrenamiento corre en **Databricks** (`notebooks/08_train_all.py`) par
 ```bash
 python steam_etl.py --sample 2000 --source steamspy   # (opcional) traer más juegos
 python build_dataset_v2.py                            # regenerar el master con features v2
-python train_models.py                                # reentrenar todos los modelos -> models/ y reports/
+python train_models.py                                # modelos LR/SVM/MLP + owners + NN -> models/, reports/
+python train_stage1.py                                # etapa 1 del embudo: tracción (datos filtrados)
 python app/server.py                                  # levantar el dashboard
 ```
 
@@ -113,6 +111,13 @@ Medido en test (split 80/20 estratificado sobre 7.817 juegos con `owners>0`). Ba
 27% Flop / 54% Rentable / 18% Hit. El MLP es el modelo de referencia del dashboard; la LR se conserva por
 interpretabilidad. Detalle y matrices de confusión en la documentación del estudio.
 
+### Embudo de dos etapas
+
+El simulador combina dos modelos: **Etapa 1** estima P(el juego logra tracción comercial) sobre 17.565 juegos
+con metadata completa (AUC 0.89), y **Etapa 2** predice Flop/Rentable/Hit condicionado a esa tracción. El
+resultado son cuatro probabilidades (sin tracción / Flop / Rentable / Hit). Entrenar la etapa 1 sobre datos sin
+filtrar daba un AUC engañoso (0.96) por un sesgo de recolección; el detalle está en la documentación (§5.6).
+
 ---
 
 ## Entrenamiento en Databricks (Free Edition)
@@ -138,18 +143,6 @@ Edition no permite descargar archivos del serverless salvo vía un Volume de UC)
 Aplica dos técnicas del curso a los datos de Steam: **anonimización SHA-256** de estudio/distribuidora
 (`steam_anonimizar.py`) y **análisis con Spark RDD** sobre los 32.966 registros (`steam_rdd_analisis.py`, para
 Databricks; con verificación local en pandas). Ver `ingenieria_datos/README.md`.
-
----
-
-## Dashboard estático v1 (la prueba)
-
-[`steampredict_dashboard_comercial.html`](steampredict_dashboard_comercial.html) corre en el navegador **sin
-servidor** (modelo LR embebido, softmax replicado en JavaScript). Publicado en GitHub Pages:
-**https://samccdev.github.io/PI_steam/**. 100% offline (Tailwind/lucide vendoreados). Regenerar tras reentrenar:
-
-```bash
-python build_dataset_v2.py && python export_model_web.py && python embed_model_in_html.py
-```
 
 ---
 
