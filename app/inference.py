@@ -134,12 +134,26 @@ def normalize_state(features: dict) -> dict:
     s["num_categories"] = sum(int(s.get(c, 0)) for c in BOOL_FEATS if c.startswith("cat_"))
     if "is_early_access" in s:
         s["is_early_access"] = int(bool(s.get("genre_early_access", 0)) or bool(s.get("tag_early_access", 0)))
-    # Cap realista del precio: el dataset llega a $200 (outliers) pero p99=$50; por encima
-    # de ~$70 el modelo extrapola y dispara P(Hit) de forma artificial. Se limita la entrada.
-    price = min(max(float(s.get("price", 0) or 0), 0.0), 70.0)
-    s["price"] = price
+    # El precio del usuario se deja pasar tal cual (el slider llega a $200), pero el valor
+    # que ENTRA al modelo se acota a $70 para que el StandardScaler no extrapole y dispare
+    # P(Hit) artificialmente. La penalización por sobreprecio se aplica aparte en predict()
+    # vía _price_realism_factor — así $200 se muestra, pero claramente NO como Hit.
+    price = max(float(s.get("price", 0) or 0), 0.0)
+    s["price"] = min(price, 70.0)
     s["price_tier"] = ("F2P" if price <= 0 else "Budget" if price < 10 else "Mid" if price < 20 else "Premium")
     return s
+
+
+def _price_realism_factor(price: float) -> float:
+    """Factor multiplicativo [0.02, 1.0] que penaliza la probabilidad de Hit cuando el
+    precio supera el techo de mercado. Empíricamente, en el dataset (p99 ≈ $50) ningún
+    juego por encima de ~$70 alcanza volúmenes de Hit: un sobreprecio mata la demanda.
+    Decae exponencialmente desde $70; a $200 queda en ~4% del valor original."""
+    ceil = 70.0
+    price = max(float(price or 0), 0.0)
+    if price <= ceil:
+        return 1.0
+    return float(max(0.02, np.exp(-(price - ceil) / 40.0)))
 
 
 def _row(state: dict) -> pd.DataFrame:
@@ -206,8 +220,22 @@ def predict(features: dict, model: str = "todos", mode: str = "pre") -> dict:
                      "clase": CLASSES[int(np.argmax(p))]}
         argmax_classes.append(out[name]["clase"])
 
+    # Penalización por sobreprecio: si el precio real supera el techo de mercado, la masa
+    # de P(Hit) se traslada a Flop (un juego carísimo no vende) y se recalcula la clase.
+    raw_price = float((features or {}).get("price", 0) or 0)
+    realism = _price_realism_factor(raw_price)
+    if realism < 1.0:
+        for name in out:
+            pr = out[name]["probs"]
+            lost = pr["Hit"] * (1.0 - realism)
+            pr["Hit"] = round(pr["Hit"] * realism, 4)
+            pr["Flop"] = round(pr["Flop"] + lost, 4)
+            out[name]["clase"] = max(pr, key=pr.get)
+        argmax_classes = [out[name]["clase"] for name in out]
+
     # owners y explicación se mantienen sobre las features pre-lanzamiento (decisiones de diseño)
     owners_est = max(0, int(np.expm1(OWNERS_REG.predict(_row(pre_state))[0])))
+    owners_est = int(owners_est * realism)  # un sobreprecio también recorta el alcance estimado
     ref_pre = "mlp" if "mlp" in MODELS else list(MODELS)[0]
 
     ref = "mlp" if "mlp" in out else list(out)[0]

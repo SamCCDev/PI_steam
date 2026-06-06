@@ -63,6 +63,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", CONTENT_TYPES.get(ext, "application/octet-stream"))
         self.send_header("Content-Length", str(len(body)))
+        # Forzar revalidación: evita que el navegador sirva index.html/JS cacheado tras un
+        # redeploy (el http.server por sí solo no manda Cache-Control y Chrome cachea el HTML).
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 
