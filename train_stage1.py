@@ -89,6 +89,15 @@ def build_all_games() -> pd.DataFrame:
 
 def main():
     df = build_all_games()
+    # FILTRO de metadata completa — clave para eliminar el sesgo de recolección.
+    # Los juegos owners==0 venían del catálogo de Steam con campos sin poblar (sin fecha,
+    # sin plataforma, sin descripción); el modelo aprendía "metadata faltante" en vez de
+    # calidad. Al exigir metadata completa, la etapa de tracción mide señales reales.
+    before = len(df)
+    df = df[(df["release_quarter"] != "Desconocido") & (df["platform_windows"] == 1)
+            & ((df["num_genres"] + df["num_tags"]) >= 1) & (df["short_desc_len"] > 0)].reset_index(drop=True)
+    print(f"Filtro metadata completa: {before:,} -> {len(df):,} juegos (elimina el artefacto de recolección)")
+
     bool_feats = [c for c in df.columns if c.startswith(BOOL_PREFIXES)
                   and df[c].nunique() > 1 and df[c].value_counts(normalize=True).iloc[0] < 0.999]
     num_feats = [c for c in NUM_FEATS if c in df.columns]

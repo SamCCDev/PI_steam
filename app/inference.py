@@ -53,10 +53,24 @@ POST_LABELS = {"ccu": "Jugadores concurrentes (pico)", "rating_porcentaje": "% r
                "metacritic_score": "Nota Metacritic", "ts_positive_ratio": "Proporción positiva",
                "ts_avg_playtime_hrs": "Horas jugadas (prom.)", "ts_months_active": "Meses activo"}
 
-# Nota: se probó un modelo en 2 etapas (tracción → clase) con `train_stage1.py`, pero la
-# etapa de tracción resultó confundida por la metodología de recolección (owners>0 vino del
-# crawl de SteamSpy y owners==0 del catálogo, con metadata poblada de forma distinta). Por eso
-# NO se integra al producto; queda documentado como hallazgo en la documentación del estudio.
+# ── Etapa 1 del embudo: modelo de TRACCIÓN (¿el juego logra ventas estimables?) ──
+# Entrenado sobre juegos con METADATA COMPLETA (train_stage1.py) para eliminar el sesgo de
+# recolección (catálogo vs SteamSpy). Devuelve P(tracción); el simulador la combina con la
+# etapa 2 (clase | vende) en un embudo de 4 resultados.
+STAGE1 = None
+STAGE1_COLS = []
+_s1 = MODELS_DIR / "stage1.joblib"
+if _s1.exists():
+    STAGE1 = joblib.load(_s1)
+    STAGE1_COLS = json.loads((MODELS_DIR / "stage1_schema.json").read_text(encoding="utf-8"))["feat_cols"]
+
+
+def _traccion(state: dict):
+    """Etapa 1: P(el juego logra tracción comercial = SteamSpy le estima propietarios)."""
+    if STAGE1 is None:
+        return None
+    row = pd.DataFrame([{c: state.get(c, 0) for c in STAGE1_COLS}])[STAGE1_COLS]
+    return float(STAGE1.predict_proba(row)[0][1])
 
 DF = pd.read_csv(OUTPUT_DIR / "dataset_ml.csv", sep=";")
 PREVALENCE = {c: float(DF[c].mean()) for c in BOOL_FEATS}
@@ -200,11 +214,23 @@ def predict(features: dict, model: str = "todos", mode: str = "pre") -> dict:
     desacuerdo = len(set(argmax_classes)) > 1
     nivel = "alta" if (desacuerdo or margen < 0.12) else "media" if margen < 0.30 else "baja"
 
+    # Embudo de 2 etapas: P(tracción) × clase condicional (etapa 2)
+    p_vende = _traccion(pre_state)
+    embudo = None
+    if p_vende is not None:
+        rp = out[ref]["probs"]
+        embudo = {"NoTraccion": round(1 - p_vende, 4),
+                  "Flop": round(p_vende * rp["Flop"], 4),
+                  "Rentable": round(p_vende * rp["Rentable"], 4),
+                  "Hit": round(p_vende * rp["Hit"], 4)}
+
     return {
         "modo": "post" if use_post else "pre",
         "modelos": out,
         "owners_estimados": owners_est,
         "clase_por_owners": _class_from_owners(owners_est),
+        "traccion": p_vende,
+        "embudo": embudo,
         "incertidumbre": {"margen_top2": margen, "desacuerdo": desacuerdo,
                           "nivel": nivel, "modelo_ref": ref},
         "explicacion": {"target": "Hit", "modelo": ref_pre,

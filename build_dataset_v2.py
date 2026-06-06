@@ -2,8 +2,8 @@
 ==============================================================================
   BUILD DATASET v2 — Master ML-ready con features ampliadas (Dashboard v2)
 ==============================================================================
-  Superset de build_dataset.py. Mantiene las mismas entradas/salidas y la
-  etiqueta multiclase, y AÑADE las features nuevas acordadas para la v2:
+  Consolida los 4 CSV relacionales (metadata/tags/text/timeseries) en el master
+  ML-ready, con la etiqueta multiclase y las features nuevas de la v2:
 
     - num_genres / num_tags / num_categories  (riqueza de catálogo del juego)
     - release_quarter (categórica, estacionalidad) + release_year/month (análisis)

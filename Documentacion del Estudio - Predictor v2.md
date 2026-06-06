@@ -146,7 +146,7 @@ Con esas señales el AUC del perceptrón sube de 0,888 a 0,907. La lectura es di
 un margen de incertidumbre que solo se cierra cuando llegan los primeros datos de cómo lo recibe el público. El
 dashboard refleja esto con un interruptor "aún no lo lancé / ya lo lancé" que alterna entre ambos modelos.
 
-### 5.6 Intento de modelo en dos etapas y hallazgo metodológico
+### 5.6 Modelo en dos etapas (embudo) y un sesgo de recolección corregido
 
 Se exploró un enfoque de embudo en dos etapas: una primera etapa que estimara si el juego logra tracción
 comercial (que SteamSpy reporte propietarios) sobre los 32.959 juegos del catálogo, y una segunda condicionada
@@ -161,12 +161,23 @@ fuente pobló de manera distinta campos como plataformas, fecha, cartas de inter
 Al quitar las dos variables más sospechosas el AUC apenas bajó a 0,94 y otras del mismo tipo ocuparon su lugar,
 lo que confirma que la separación se apoya en artefactos de recolección y no en señales comerciales reales.
 
-Por eso se descartó el embudo para el producto: una configuración típica colapsaba a ~2 % de probabilidad de
-tracción (≈98 % "sin tracción"), un resultado poco fiable e inútil como simulador. Se mantiene el modelo de una
-sola etapa entrenado sobre los juegos con ventas. Separar tracción de magnitud de forma limpia requeriría una
-señal pre-lanzamiento independiente del método de recolección (por ejemplo, listas de deseos), que aquí no
-existe. El intento se conserva por su valor metodológico: un AUC alto puede esconder un sesgo de recolección, y
-conviene auditar los coeficientes antes de confiar en la métrica.
+La causa era de fondo: los juegos sin tracción provenían del catálogo de Steam con campos sin poblar (sin fecha,
+sin plataforma, sin descripción), mientras que los juegos con tracción venían del crawl de SteamSpy con metadata
+completa. El modelo separaba ambos mundos por la presencia de metadata, no por el diseño del juego. En una
+configuración típica esto hacía colapsar la tracción a ~2 %.
+
+La solución fue **filtrar a juegos con metadata completa** (fecha de lanzamiento real, plataforma declarada, al
+menos un género o etiqueta y descripción): 17.565 juegos. Sobre ese subconjunto el artefacto desaparece —
+`platform_windows` deja de dominar y la etapa de tracción baja a un AUC de 0,89, ahora apoyado en señales reales
+del juego. Las probabilidades se vuelven sensatas: un proyecto bien configurado obtiene ~51 % de probabilidad de
+tracción frente a ~4 % de uno pobre. El filtro también es coherente con el dominio: casi todos los juegos de
+Steam son de Windows, así que un `platform_windows` en cero delataba metadata faltante, no un juego sin esa
+plataforma.
+
+Con esa corrección el embudo se incorpora al producto: el simulador muestra P(tracción) y, combinada con la
+etapa 2, los cuatro resultados (sin tracción / Flop / Rentable / Hit). La lección metodológica queda registrada:
+un AUC alto puede esconder un sesgo de recolección; auditar los coeficientes lo reveló, y filtrar por completitud
+de metadata recuperó un modelo válido sin descargar más datos.
 
 ## 6. Ingeniería de datos
 

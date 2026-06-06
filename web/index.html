@@ -581,6 +581,7 @@ select:focus{border-color:var(--accent-dim)}
         </div>
         <!-- results -->
         <div id="simResults">
+          <div id="twoStage"></div>
           <div class="kpis" id="simKpis"></div>
           <div class="grid" style="grid-template-columns:1.3fr 1fr">
             <div class="panel">
@@ -998,7 +999,8 @@ async function apiPredict(st){
   const price=st.numeric.price||0, owners=resp.owners_estimados;
   const ingreso=Math.round(owners*(price<=0?0:price)*0.16*0.65);
   return {modelos:resp.modelos,consenso:{probs:cons,clase:argmax(cons)},owners,ingreso,
-          incertidumbre:resp.incertidumbre,explicacion:resp.explicacion};
+          incertidumbre:resp.incertidumbre,explicacion:resp.explicacion,
+          traccion:resp.traccion,embudo:resp.embudo};
 }
 
 /* ---------- consola ---------- */
@@ -1471,6 +1473,23 @@ async function doRecompute(){
  */
 function renderSimResults(r){
   const cons=r.consenso, p=cons.probs, noFlop=1-p.Flop;
+  // ── Embudo de 2 etapas (tracción × clase) ──
+  const tw=$('#twoStage');
+  if(tw && r.embudo){
+    const e=r.embudo, seg=[['NoTraccion','Sin tracción','#46525f'],['Flop','Flop','#c75450'],['Rentable','Rentable','#66c0f4'],['Hit','Hit','#a4d007']];
+    tw.innerHTML=`<div class="panel" style="margin-bottom:14px"><div class="panel-h">
+        <h3>Embudo comercial · 2 etapas</h3><span class="hint">Etapa 1: ¿logra tracción? × Etapa 2: clase | vende</span></div>
+      <div class="panel-b"><div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="text-align:center;flex:0 0 auto">
+          <div style="font-family:var(--display);font-size:32px;font-weight:700;color:var(--accent);line-height:1">${pct(r.traccion)}%</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:5px">P(logra tracción)</div></div>
+        <div style="flex:1;min-width:260px">
+          <div style="display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--border-soft)">
+            ${seg.map(([k,,col])=>`<div title="${k}: ${pct(e[k])}%" style="width:${e[k]*100}%;background:${col};transition:width .6s cubic-bezier(.22,.61,.36,1)"></div>`).join('')}</div>
+          <div style="display:flex;gap:15px;margin-top:8px;flex-wrap:wrap;font-size:10.5px;color:var(--muted)">
+            ${seg.map(([k,lbl,col])=>`<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:${col}"></span>${lbl} <b style="color:var(--text)">${pct(e[k])}%</b></span>`).join('')}</div>
+        </div></div></div></div>`;
+  } else if(tw){ tw.innerHTML=''; }
   // KPIs con stagger
   const tier=cons.clase, tc={Flop:'flop',Rentable:'rent',Hit:'hit'}[tier];
   $('#simKpis').innerHTML=`

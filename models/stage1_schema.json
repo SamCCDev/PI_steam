@@ -13,7 +13,6 @@
     "num_tags",
     "num_categories",
     "is_free",
-    "platform_windows",
     "platform_mac",
     "platform_linux",
     "genre_action",
@@ -27,6 +26,7 @@
     "genre_sports",
     "genre_strategy",
     "genre_violent",
+    "genre_gore",
     "genre_early_access",
     "cat_single_player",
     "cat_multi_player",
@@ -94,22 +94,22 @@
   ],
   "numeric": {
     "price": {
-      "median": 0.0
+      "median": 2.99
     },
     "supported_languages": {
       "median": 2.0
     },
     "total_achievements": {
-      "median": 0.0
+      "median": 5.0
     },
     "total_dlcs": {
       "median": 0.0
     },
     "min_ram_gb": {
-      "median": 4.0
+      "median": 3.0
     },
     "short_desc_len": {
-      "median": 224.0
+      "median": 217.0
     },
     "dev_game_count": {
       "median": 1.0
@@ -129,7 +129,6 @@
   },
   "boolean": [
     "is_free",
-    "platform_windows",
     "platform_mac",
     "platform_linux",
     "genre_action",
@@ -143,6 +142,7 @@
     "genre_sports",
     "genre_strategy",
     "genre_violent",
+    "genre_gore",
     "genre_early_access",
     "cat_single_player",
     "cat_multi_player",
@@ -234,17 +234,16 @@
         "Mid",
         "Premium"
       ],
-      "default": "F2P"
+      "default": "Budget"
     },
     "release_quarter": {
       "categories": [
-        "Desconocido",
         "Q1",
         "Q2",
         "Q3",
         "Q4"
       ],
-      "default": "Desconocido"
+      "default": "Q2"
     }
   }
 }
