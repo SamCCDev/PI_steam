@@ -1253,16 +1253,27 @@ const COMMANDS={
     const btn=document.querySelector(`[data-mode="${m}"]`); if(btn) btn.click();
     termPrint(`<span class="ok">✓</span> modo ${m==='quick'?'Quick':'Presentación'}`);
   },
-  find(...a){
+  async find(...a){
     const q=a.join(' ').toLowerCase(); if(!q){ termPrint('uso: find &lt;juego&gt;','warn'); return; }
+    // Busca en el backend (mismos juegos reales que el buscador del header); el
+    // catálogo local solo queda como respaldo si el backend está caído.
+    let juegos=null;
+    try{ juegos=(await API.get('/api/games?q='+encodeURIComponent(q))).juegos||[]; }catch(e){}
+    if(juegos){
+      if(!juegos.length){ termPrint(`sin coincidencias para <b>${q}</b>`,'warn'); return; }
+      const g=juegos[0];
+      termPrint(`<span class="ok">✓</span> cargando <b>${g.name}</b> · ${g.clase} · ${ownersFmt(g.owners)} owners (real)`);
+      if(juegos.length>1) termPrint(`(${juegos.length-1} más: ${juegos.slice(1,4).map(h=>h.name).join(', ')})`,'dim');
+      await loadRealGame(g.appid, g.name);
+      return;
+    }
     const hits=CATALOG.filter(gm=>gm.name.toLowerCase().includes(q)||gm.developer.toLowerCase().includes(q));
     if(!hits.length){ termPrint(`sin coincidencias para <b>${q}</b>`,'warn'); return; }
     const gm=hits[0];
     state.numeric.price=Math.min(gm.price,MOCK_CONFIG.numeric.price.max);
     buildInputs(); doRecompute();
     if(activeView!=='sim') showView('sim');
-    termPrint(`<span class="ok">✓</span> cargado <b>${gm.name}</b> ($${gm.price}) · ${gm.clase} · ${ownersFmt(gm.owners)} owners`);
-    if(hits.length>1) termPrint(`(${hits.length-1} más: ${hits.slice(1,4).map(h=>h.name).join(', ')})`,'dim');
+    termPrint(`<span class="ok">✓</span> cargado <b>${gm.name}</b> ($${gm.price}) · ${gm.clase} · ${ownersFmt(gm.owners)} owners <span class="dim">(catálogo local)</span>`);
   },
   buscar(...a){ COMMANDS.find(...a); },
   metrics(){
