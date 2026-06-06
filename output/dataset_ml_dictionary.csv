@@ -4,7 +4,7 @@ name;id;meta;str;7788;;False;False
 developer;id;meta;str;3672;;False;False
 publisher;id;meta;str;2857;;False;False
 release_date;id;meta;str;2689;;False;False
-price;feature_numeric;pre;float64;380;79.3;False;True
+price;feature_numeric;pre;float64;374;79.3;False;True
 is_free;feature_tag;pre;int64;2;13.7;False;True
 owners_lower_bound;target_raw;meta;int64;12;100.0;False;False
 ccu;target_raw;meta;int64;1064;73.8;False;False

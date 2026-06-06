@@ -15,11 +15,11 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 2246340;Monster Hunter Wilds;CAPCOM Co., Ltd.;CAPCOM Co., Ltd.;27 Feb, 2025;52.49;0;20000000;12494;58.27;127273;91142;0;50;191;15;full;1;0;0;16.0;0
 553850;HELLDIVERS™ 2;Arrowhead Game Studios;PlayStation Publishing LLC;8 Feb, 2024;39.99;0;20000000;53399;76.24;775883;241752;0;38;1;14;none;1;0;0;8.0;0
 230410;Warframe;Digital Extremes;Digital Extremes;25 Mar, 2013;0.0;1;20000000;36195;87.05;545393;81110;0;193;18;15;full;1;0;0;4.0;69
-1245620;ELDEN RING;FromSoftware, Inc.;FromSoftware, Inc.;24 Feb, 2022;249.0;0;20000000;29529;92.89;981540;75137;0;42;2;15;full;1;0;0;12.0;94
+1245620;ELDEN RING;FromSoftware, Inc.;FromSoftware, Inc.;24 Feb, 2022;59.99;0;20000000;29529;92.89;981540;75137;0;42;2;15;full;1;0;0;12.0;94
 105600;Terraria;Re-Logic;Re-Logic;16 May, 2011;45.99;0;20000000;24580;97.48;1373979;35494;0;137;2;9;full;1;1;1;0.0;83
 2694490;Path of Exile 2;Grinding Gear Games;Grinding Gear Games;6 Dec, 2024;29.99;0;20000000;16727;70.12;118511;50510;0;0;9;9;full;1;0;0;8.0;0
 431960;Wallpaper Engine;Wallpaper Engine Team;Wallpaper Engine Team;16 Nov, 2018;2.99;0;20000000;91184;98.04;876898;17560;0;17;1;23;none;1;0;0;1.0;0
-1086940;Baldur's Gate 3;Larian Studios;Larian Studios;3 Aug, 2023;186.75;0;20000000;54771;96.85;736688;23974;0;54;2;15;full;1;1;0;8.0;96
+1086940;Baldur's Gate 3;Larian Studios;Larian Studios;3 Aug, 2023;59.99;0;20000000;54771;96.85;736688;23974;0;54;2;15;full;1;1;0;8.0;96
 291550;Brawlhalla;Blue Mammoth Games;Ubisoft;17 Oct, 2017;0.0;1;20000000;14169;81.46;314809;71647;0;65;5;13;none;1;1;0;2.0;0
 4000;Garry's Mod;Facepunch Studios;Valve;29 Nov, 2006;5.79;0;20000000;18400;96.8;1122546;37161;0;29;0;31;none;1;1;1;4.0;0
 1085660;Destiny 2;Bungie;Bungie;1 Oct, 2019;0.0;1;20000000;24619;79.58;497891;127725;0;23;16;13;none;1;0;0;6.0;83
@@ -36,11 +36,11 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 901583;Grand Theft Auto IV: Complete Edition;Rockstar North;Rockstar Games;;0.0;0;20000000;0;82.48;144570;30702;0;55;0;5;none;1;0;0;0.0;90
 899770;Last Epoch;Eleventh Hour Games;Eleventh Hour Games;21 Feb, 2024;18.0;0;20000000;5831;79.57;88027;22596;0;0;8;10;full;1;0;0;8.0;80
 340;Half-Life 2: Lost Coast;Valve;Valve;27 Oct, 2005;0.0;0;20000000;2;89.25;12215;1471;0;0;0;9;none;1;0;1;1.0;0
-1091500;Cyberpunk 2077;CD PROJEKT RED;CD PROJEKT RED;9 Dec, 2020;199.0;0;20000000;22265;84.39;713071;131850;0;57;3;19;full;1;1;0;12.0;86
+1091500;Cyberpunk 2077;CD PROJEKT RED;CD PROJEKT RED;9 Dec, 2020;59.99;0;20000000;22265;84.39;713071;131850;0;57;3;19;full;1;1;0;12.0;86
 381210;Dead by Daylight;Behaviour Interactive Inc.;Behaviour Interactive Inc.;14 Jun, 2016;14.99;0;20000000;44886;79.05;630223;166993;0;297;39;15;full;1;0;0;8.0;0
-990080;Hogwarts Legacy;Avalanche Software;Warner Bros. Games;10 Feb, 2023;799000.0;0;20000000;5716;90.22;289966;31429;0;45;1;14;full;1;0;0;16.0;83
+990080;Hogwarts Legacy;Avalanche Software;Warner Bros. Games;10 Feb, 2023;8.99;0;20000000;5716;90.22;289966;31429;0;45;1;14;full;1;0;0;16.0;83
 438100;VRChat;VRChat Inc.;VRChat Inc.;1 Feb, 2017;0.0;1;20000000;34699;75.56;181623;58732;0;0;0;11;full;1;0;0;4.0;0
-292030;The Witcher 3: Wild Hunt;CD PROJEKT RED;CD PROJEKT RED;18 May, 2015;99.99;0;20000000;15893;96.13;802993;32356;0;78;22;17;none;1;0;0;6.0;93
+292030;The Witcher 3: Wild Hunt;CD PROJEKT RED;CD PROJEKT RED;18 May, 2015;39.99;0;20000000;15893;96.13;802993;32356;0;78;22;17;none;1;0;0;6.0;93
 945360;Among Us;Innersloth;Innersloth;16 Nov, 2018;2.49;0;20000000;3832;91.85;643681;57104;0;33;0;14;full;1;0;0;1.0;85
 1097150;Fall Guys;Mediatonic;;3 Aug, 2020;0.0;0;20000000;664;81.3;385154;88589;0;34;0;11;none;1;0;0;8.0;80
 49520;Borderlands 2;Gearbox Software;2K;20 Sep, 2012;19.99;0;10000000;8551;92.44;272900;22318;0;75;5;8;full;1;1;1;0.0;89
@@ -56,7 +56,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 252950;Rocket League®;Psyonix LLC;Psyonix LLC;6 Jul, 2015;0.0;0;10000000;21106;87.35;509445;73775;0;88;0;12;none;1;0;0;4.0;86
 108600;Project Zomboid;The Indie Stone;The Indie Stone;8 Nov, 2013;10.49;0;10000000;22864;94.19;355171;21892;0;0;0;21;none;1;1;1;8.0;0
 1966720;Lethal Company;Zeekerss;Zeekerss;23 Oct, 2023;5.79;0;10000000;6199;97.18;473422;13738;0;0;0;1;none;1;0;0;0.0;0
-1174180;Red Dead Redemption 2;Rockstar Games;Rockstar Games;5 Dec, 2019;53990.0;0;10000000;29885;92.25;676667;56875;0;51;0;13;none;1;0;0;8.0;93
+1174180;Red Dead Redemption 2;Rockstar Games;Rockstar Games;5 Dec, 2019;59.99;0;10000000;29885;92.25;676667;56875;0;51;0;13;none;1;0;0;8.0;93
 1517290;Battlefield™ 2042;DICE;Electronic Arts;19 Nov, 2021;59.99;0;10000000;2774;46.74;139186;158588;0;34;2;14;full;1;0;0;8.0;0
 1240440;Halo Infinite;343 Industries;Xbox Game Studios;15 Nov, 2021;0.0;1;10000000;2275;69.66;123333;53708;0;144;1;18;full;1;0;0;8.0;0
 648800;Raft;Redbeet Interactive;Axolot Games;20 Jun, 2022;10.99;0;10000000;4701;93.31;323198;23161;0;104;0;12;none;1;0;0;6.0;0
@@ -72,7 +72,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 322330;Don't Starve Together;Klei Entertainment;Klei Entertainment;21 Apr, 2016;6.59;0;10000000;30542;95.26;475393;23668;0;0;49;12;full;1;1;1;1.0;83
 239140;Dying Light;Techland;Techland;26 Jan, 2015;18.0;0;10000000;4953;95.2;435687;21945;0;78;41;17;full;1;1;1;4.0;87
 477160;Human Fall Flat;No Brakes Games;Curve Games;22 Jul, 2016;3.14;0;10000000;950;94.67;202253;11387;0;151;1;16;full;1;1;0;1.0;70
-251570;7 Days to Die;The Fun Pimps;The Fun Pimps Entertainment LLC;25 Jul, 2024;208.49;0;10000000;17045;88.61;327889;42157;0;43;9;14;full;1;1;1;8.0;0
+251570;7 Days to Die;The Fun Pimps;The Fun Pimps Entertainment LLC;25 Jul, 2024;44.99;0;10000000;17045;88.61;327889;42157;0;43;9;14;full;1;1;1;8.0;0
 100;Counter-Strike: Condition Zero;Valve;Valve;1 Mar, 2004;5.79;0;10000000;83;89.75;13442;1535;0;0;0;8;none;1;1;1;0.09;65
 1665460;eFootball™;KONAMI;KONAMI;29 Sep, 2021;0.0;1;10000000;13404;47.73;44067;48266;0;0;0;17;none;1;0;0;8.0;0
 417910;Street Warriors Online;Crazy Rocks Studios;Crazy Rocks Studios;16 Dec, 2016;1.99;0;10000000;1;57.59;941;693;0;43;3;7;none;1;0;0;2.0;0
@@ -89,7 +89,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 8930;Sid Meier's Civilization® V;Firaxis Games;2K;23 Sep, 2010;7.49;0;10000000;12206;95.82;195724;8541;0;286;15;10;none;1;1;1;2.0;90
 304050;Trove;gamigo US Inc.;gamigo US Inc.;9 Jul, 2015;0.0;1;10000000;758;80.22;74103;18267;0;19;12;6;none;1;0;0;1.0;0
 289070;Sid Meier’s Civilization® VI;Firaxis Games;2K;20 Oct, 2016;5.99;0;10000000;25420;86.89;304053;45867;0;320;10;12;none;1;1;1;4.0;88
-377160;Fallout 4;Bethesda Game Studios;Bethesda Softworks;9 Nov, 2015;79.0;0;10000000;11179;83.12;326054;66233;0;84;10;10;full;1;0;0;8.0;84
+377160;Fallout 4;Bethesda Game Studios;Bethesda Softworks;9 Nov, 2015;19.99;0;10000000;11179;83.12;326054;66233;0;84;10;10;full;1;0;0;8.0;84
 532210;Life is Strange 2;DONTNOD Entertainment;Square Enix;26 Sep, 2018;0.0;1;10000000;153;86.3;31616;5018;0;46;6;10;full;1;1;1;4.0;0
 2186680;Warhammer 40,000: Rogue Trader;Owlcat Games;Owlcat Games;7 Dec, 2023;24.99;0;10000000;3582;85.57;26360;4445;0;106;9;8;none;1;1;0;8.0;0
 1238810;Battlefield™ V;DICE;Electronic Arts;22 Oct, 2020;49.99;0;10000000;6327;70.86;177352;72936;0;21;2;14;full;1;0;0;8.0;0
@@ -101,9 +101,9 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 1811260;EA SPORTS™ FIFA 23;EA Canada;Electronic Arts;30 Sep, 2022;0.0;0;5000000;1280;56.92;86192;65227;0;39;0;21;full;1;0;0;8.0;0
 204360;Castle Crashers®;The Behemoth;The Behemoth;26 Sep, 2012;7.99;0;5000000;443;96.13;120733;4865;0;12;3;11;full;1;1;0;8.0;0
 218230;PlanetSide 2;Rogue Planet Games;Daybreak Game Company;20 Nov, 2012;0.0;1;5000000;496;80.87;59598;14096;0;0;0;7;none;1;0;0;6.0;84
-72850;The Elder Scrolls V: Skyrim;Bethesda Game Studios;Bethesda Softworks;10 Nov, 2011;89.99;0;5000000;1463;94.84;300915;16364;0;75;1;9;none;1;0;0;0.0;94
+72850;The Elder Scrolls V: Skyrim;Bethesda Game Studios;Bethesda Softworks;10 Nov, 2011;19.99;0;5000000;1463;94.84;300915;16364;0;75;1;9;none;1;0;0;0.0;94
 394360;Hearts of Iron IV;Paradox Development Studio;Paradox Interactive;6 Jun, 2016;10.49;0;5000000;32112;89.19;305168;36982;0;273;26;10;none;1;1;1;4.0;83
-489830;The Elder Scrolls V: Skyrim Special Edition;Bethesda Game Studios;Bethesda Softworks;27 Oct, 2016;169.0;0;5000000;25085;92.02;310162;26896;0;75;2;9;none;1;0;0;8.0;74
+489830;The Elder Scrolls V: Skyrim Special Edition;Bethesda Game Studios;Bethesda Softworks;27 Oct, 2016;39.99;0;5000000;25085;92.02;310162;26896;0;75;2;9;none;1;0;0;8.0;74
 322170;Geometry Dash;RobTop Games;RobTop Games;22 Dec, 2014;2.99;0;5000000;27850;93.28;401026;28895;0;547;0;1;none;1;1;0;0.5;0
 1446780;MONSTER HUNTER RISE;CAPCOM Co., Ltd.;CAPCOM Co., Ltd.;12 Jan, 2022;29.0;0;5000000;3658;82.15;92564;20108;0;100;252;14;full;1;0;0;8.0;86
 224260;No More Room in Hell;No More Room in Hell Team;Lever Games;31 Oct, 2013;0.0;1;5000000;473;89.9;66753;7500;0;115;1;17;none;1;0;1;2.0;0
@@ -285,7 +285,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 234140;Mad Max;Avalanche Studios;Warner Bros. Games;1 Sep, 2015;10.0;0;2000000;563;92.22;76230;6430;0;49;0;9;full;1;0;0;6.0;73
 8500;EVE Online;CCP;CCP;15 Dec, 2010;0.0;1;2000000;3705;73.69;26813;9575;0;0;22;8;none;1;1;0;0.0;88
 552520;Far Cry® 5;Ubisoft Montreal;Ubisoft;26 Mar, 2018;47.99;0;2000000;1297;80.92;140377;33100;0;72;5;15;none;1;0;0;8.0;0
-7670;BioShock™;2K Boston;2K;21 Aug, 2007;85.9;0;2000000;44;94.17;29127;1804;0;0;0;5;none;1;0;0;0.12;96
+7670;BioShock™;2K Boston;2K;21 Aug, 2007;19.99;0;2000000;44;94.17;29127;1804;0;0;0;5;none;1;0;0;0.12;96
 760160;Vampire: The Masquerade - Bloodhunt;Sharkmob AB;Sharkmob AB;27 Apr, 2022;0.0;0;2000000;362;76.09;43433;13651;0;35;0;13;full;1;0;0;8.0;0
 1203620;Enshrouded;Keen Games GmbH;Keen Games GmbH;24 Jan, 2024;29.99;0;2000000;10654;86.43;67486;10594;0;52;1;15;full;1;0;0;16.0;0
 270880;American Truck Simulator;SCS Software;SCS Software;2 Feb, 2016;10.09;0;2000000;6742;96.83;169735;5552;0;130;59;30;none;1;1;1;8.0;76
@@ -321,7 +321,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 312990;The Expendabros;Free Lives;Devolver Digital;5 Aug, 2014;0.0;1;2000000;20;97.18;17661;513;0;0;0;1;full;1;1;0;2.0;0
 211500;RaceRoom Racing Experience;KW Studios;KW Studios;12 Feb, 2013;0.0;1;2000000;431;75.42;17812;5806;0;0;0;5;none;1;0;0;4.0;0
 506540;Last Man Standing;Free Reign Entertainment;Free Reign Entertainment;29 Mar, 2017;0.0;0;2000000;0;61.27;10776;6811;0;0;0;1;none;1;0;0;6.0;0
-20900;The Witcher: Enhanced Edition Director's Cut;CD PROJEKT RED;CD PROJEKT RED;16 Sep, 2008;5500.0;0;2000000;616;88.95;73569;9135;0;0;1;10;none;1;1;0;1.0;86
+20900;The Witcher: Enhanced Edition Director's Cut;CD PROJEKT RED;CD PROJEKT RED;16 Sep, 2008;9.99;0;2000000;616;88.95;73569;9135;0;0;1;10;none;1;1;0;1.0;86
 552500;Warhammer: Vermintide 2;Fatshark;Fatshark;8 Mar, 2018;14.99;0;2000000;2124;84.87;113489;20234;0;26;21;9;full;1;0;0;6.0;82
 1057090;Ori and the Will of the Wisps;Moon Studios GmbH;Xbox Game Studios;10 Mar, 2020;29.99;0;2000000;697;96.56;131989;4701;0;37;1;21;full;1;0;0;8.0;88
 359320;Elite Dangerous;Frontier Developments;Frontier Developments;2 Apr, 2015;10.49;0;2000000;4845;77.37;77388;22636;0;0;2;6;none;1;0;0;6.0;80
@@ -424,7 +424,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 648350;Jurassic World Evolution;Frontier Developments;Frontier Developments;11 Jun, 2018;20.99;0;2000000;260;87.26;47081;6875;0;73;8;12;full;1;0;0;8.0;69
 471710;Rec Room;Rec Room;Rec Room;2 Sep, 2021;0.0;1;2000000;1510;89.52;63756;7467;0;0;0;1;full;1;0;0;8.0;0
 1372880;The Day Before;FNTASTIC; Mytona Fntastic;7 Dec, 2023;0.0;0;2000000;0;15.73;3686;19751;0;0;0;13;none;1;0;0;16.0;0
-524220;NieR:Automata™;Square Enix;Square Enix;17 Mar, 2017;29300.0;0;2000000;690;87.06;122027;18142;0;47;8;6;none;1;0;0;4.0;84
+524220;NieR:Automata™;Square Enix;Square Enix;17 Mar, 2017;39.99;0;2000000;690;87.06;122027;18142;0;47;8;6;none;1;0;0;4.0;84
 305620;The Long Dark;Hinterland Studio Inc.;Hinterland Studio Inc.;1 Aug, 2017;8.99;0;2000000;2575;90.47;101846;10729;0;87;5;19;full;1;1;1;4.0;0
 475150;Titan Quest Anniversary Edition;Iron Lore Entertainment;THQ Nordic;31 Aug, 2016;2.09;0;2000000;599;90.92;32295;3226;0;115;3;12;none;1;0;0;1.0;0
 47870;Need For Speed: Hot Pursuit;Criterion Games;Electronic Arts;14 Dec, 2010;0.0;0;2000000;19;82.54;16490;3487;0;0;0;11;none;1;0;0;0.0;86
@@ -646,7 +646,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 289130;ENDLESS™ Legend;AMPLITUDE Studios;AMPLITUDE Studios;18 Sep, 2014;24.99;0;2000000;173;83.67;15589;3042;0;139;13;9;none;1;1;0;4.0;82
 488790;South Park™: The Fractured But Whole™;Ubisoft San Francisco;Ubisoft;16 Oct, 2017;23.99;0;2000000;250;84.56;24764;4520;0;35;6;9;none;1;0;0;6.0;0
 493520;GTFO;10 Chambers;10 Chambers;9 Dec, 2021;14.99;0;2000000;307;84.31;52357;9740;0;57;0;12;none;1;0;0;8.0;78
-546560;Half-Life: Alyx;Valve;Valve;23 Mar, 2020;6500.0;0;2000000;202;98.28;95555;1674;0;42;1;28;none;1;0;0;12.0;93
+546560;Half-Life: Alyx;Valve;Valve;23 Mar, 2020;59.99;0;2000000;202;98.28;95555;1674;0;42;1;28;none;1;0;0;12.0;93
 439190;Stories: The Path of Destinies;Spearhead Games;Spearhead Games;12 Apr, 2016;7.99;0;2000000;3;88.24;5754;767;0;37;2;7;full;1;0;0;4.0;74
 67370;The Darkness II;Digital Extremes;2K;9 Feb, 2012;29.99;0;2000000;19;91.65;18121;1651;0;50;0;7;none;1;1;0;1.5;77
 845070;The Awesome Adventures of Captain Spirit;DONTNOD Entertainment;Square Enix;25 Jun, 2018;0.0;1;2000000;16;92.73;13218;1036;0;0;0;9;full;1;0;0;4.0;79
@@ -887,7 +887,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 346330;BrainBread 2;Reperio Studios;Reperio Studios;9 Mar, 2022;0.0;1;1000000;6;73.25;3785;1382;0;100;0;19;none;1;1;1;0.5;0
 3910;Sid Meier's Civilization® III Complete;Firaxis Games;2K;25 Oct, 2006;0.99;0;1000000;1383;89.68;6485;746;0;0;0;1;none;1;0;0;0.12;90
 1380400;Saving Grace;Thomas JC Ironmonger;Ironmonger Games;2 Jan, 2021;1.99;0;1000000;0;93.1;27;2;0;20;0;1;full;1;0;0;4.0;0
-805550;Assetto Corsa Competizione;Kunos Simulazioni;505 Games;29 May, 2019;4250.0;0;1000000;1479;92.53;36035;2908;0;0;9;12;none;1;0;0;4.0;77
+805550;Assetto Corsa Competizione;Kunos Simulazioni;505 Games;29 May, 2019;39.99;0;1000000;1479;92.53;36035;2908;0;0;9;12;none;1;0;0;4.0;77
 41000;Serious Sam HD: The First Encounter;Croteam;Devolver Digital;24 Nov, 2009;7.99;0;1000000;46;93.42;7652;539;0;35;0;6;none;1;0;0;0.0;68
 1284190;The Planet Crafter;Miju Games;Miju Games;10 Apr, 2024;11.99;0;1000000;7330;96.05;52168;2148;0;55;3;14;full;1;0;0;4.0;0
 2064650;Tower of Fantasy;Hotta Studio;Perfect World Games;19 Oct, 2022;0.0;1;1000000;354;69.23;7595;3375;0;0;0;10;none;1;0;0;8.0;0
@@ -4754,7 +4754,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4314020;Aonaran Nevaeh;TheAonaran;TheAonaran;21 Feb, 2026;5.79;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 4314060;PuzzMao〜Puzzle and Magical Overlord〜;SERIALGAMES Inc.;SERIALGAMES Inc.;2026;0.0;0;0;0;0.0;0;0;0;0;0;1;full;1;0;0;8.0;0
 4314090;Azimuth;TheRooklet;TheRooklet;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;0.5;0
-4314120;吞天食地666（二）卧龙传;YUANG CHEN;YUANG CHEN;7 Feb, 2026;92.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
+4314120;吞天食地666（二）卧龙传;YUANG CHEN;YUANG CHEN;7 Feb, 2026;199.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 4314170;Jibbers;Leander Edler-Golla;GWorks;2026;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;1;1;4.0;0
 4314230;God Of Bath VR;SONNORI CORP;SONNORI CORP;12 Feb, 2026;3.59;0;0;0;0.0;0;0;0;8;0;2;none;1;0;0;8.0;0
 4314240;OnlyVans;Pie Games;ViceKraft;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;20;none;1;0;0;8.0;0
@@ -5210,7 +5210,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4329290;The Grimwood Hex;Little Lake Games;Little Lake Games;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;4.0;0
 4329330;After Dark: Tower 47;Studio 78;Studio 78;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 4329430;Pallet Simulator;Danisma;Danisma;2026;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;7.81;0
-4329440;Glyph Gambit: Endgame;AutoIntellect;AutoIntellect;9 Apr, 2026;95.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;1;2.0;0
+4329440;Glyph Gambit: Endgame;AutoIntellect;AutoIntellect;9 Apr, 2026;14.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;1;2.0;0
 4329460;30 Mikes ’Til Extraction;8 Slice Games;8 Slice Games;To be announced;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 4329490;Nanite's Revelry;Team Nanite;Team Nanite;24 Mar, 2026;3.59;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;4.0;0
 4329640;Stoic;STINKO;STINKO;16 Mar, 2026;1.49;0;0;0;0.0;0;0;0;11;0;1;none;1;0;0;2.0;0
@@ -6866,7 +6866,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4385950;Darkened Halls;CmnCreeper;CmnCreeper;13 Mar, 2026;0.99;0;0;0;0.0;0;0;0;8;0;1;full;1;0;0;2.0;0
 4385970;Nowhere;HollowGuys;HollowGuys;To be announced;0.0;0;0;0;0.0;0;0;0;0;0;4;none;1;0;0;8.0;0
 4386030;烧烤列车;Youxin;RUSH STUDIO;24 Mar, 2026;3.59;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;2.0;0
-4386080;Employee Survivor;simmirror;simmirror;23 Feb, 2026;99.99;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;2.0;0
+4386080;Employee Survivor;simmirror;simmirror;23 Feb, 2026;199.99;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;2.0;0
 4386090;How To Destroy A City;Studio LEF;Studio LEF;Q3 2026;0.0;0;0;0;0.0;0;0;0;0;0;9;none;1;0;0;4.0;0
 4386100;AREA WARS™;Rexo;STUDIO.D0DO;5 Mar, 2026;1.99;0;0;0;0.0;0;0;0;9;0;2;full;1;0;0;2.0;0
 4386110;Paw & Cards;Mobumin;Mobumin;26 Feb, 2026;1.99;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;3.91;0
@@ -10098,7 +10098,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4502060;Between Worlds: challenging puzzles;Novy;Novy;2026;0.0;0;0;0;0.0;0;0;0;0;0;2;none;1;1;1;4.0;0
 4502140;STAR TALE: Odyssey One;Jose Antonio Cuesta Garcia;TrabajoCreativo;September 2026;0.0;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;8.0;0
 4502150;Hentai Furry Panda;Cyber Keks;Cyber Keks;2 Apr, 2026;0.44;0;0;0;0.0;0;0;0;24;0;103;none;1;0;0;4.0;0
-4502160;Zantrixia;Baypand;Burak Bayraktar;30 Apr, 2026;92.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;2.0;0
+4502160;Zantrixia;Baypand;Burak Bayraktar;30 Apr, 2026;199.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;2.0;0
 4502180;CHEMISTS: Dead Zone;RPAX GAMING;RPAX GAMING;Q2 2026;0.0;0;0;0;0.0;0;0;0;0;0;8;none;1;0;0;8.0;0
 4502200;Legends of Goodness;Mebunaz Software;Mebunaz Software;Coming soon;0.0;0;0;0;0.0;0;0;0;0;1;30;none;1;0;0;8.0;0
 4502210;Goblin Attack;BODOS;Stay2Busy;Q2 2026;0.0;0;0;0;0.0;0;0;0;0;0;12;none;1;0;0;0.0;0
@@ -11452,7 +11452,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4544580;TIRE LAUNCHER TOGETHER;VRCFORGE STUDIOS;VRCFORGE STUDIOS;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;4.0;0
 4544620;Whispers of the Tallgrass;Mirabilis Astrum;Mirabilis Astrum;2026;0.0;0;0;0;0.0;0;0;0;0;0;9;full;1;1;1;0.02;0
 4544630;Tac-Tile;Lucas Elizado;Lucas Labs;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;3;full;1;1;1;2.0;0
-4544650;Astro Hop;Rawi Studio;Rawi Studio;25 Apr, 2026;89.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;0.98;0
+4544650;Astro Hop;Rawi Studio;Rawi Studio;25 Apr, 2026;199.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;0.98;0
 4544690;The Labyrinth;R.C.C;R.C.C;9 Apr, 2026;1.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;0.0;0
 4544700;Skazka form №7. Volost Board;IndieDacha;IndieDacha;Q2 2027;0.0;0;0;0;0.0;0;0;0;0;0;2;none;1;0;1;8.0;0
 4544740;Tiny Throne;Eterna Arena;Eterna Arena;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;4.0;0
@@ -21143,7 +21143,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 470470;Birdsketball;Waynetron;Waynetron;17 Nov, 2016;0.99;0;0;0;96.88;62;2;0;0;0;1;full;1;1;1;2.0;0
 2552410;Liminal Border Part I;Purple Software;Shiravune;13 Nov, 2023;7.99;0;0;0;91.74;100;9;0;0;0;3;none;1;0;0;4.0;0
 1912510;Anicon - Animal Complex - Party;Zeiva Inc;Zeiva Inc;8 Mar, 2022;3.99;0;0;0;100.0;1;0;0;0;1;1;none;1;0;0;0.0;0
-2204970;Hidden Harbor 2 Top-Down 3D;Aztech;Azerbaijan Technology;15 Nov, 2022;200.0;0;0;0;0.0;0;0;0;6;0;103;none;1;1;1;4.0;0
+2204970;Hidden Harbor 2 Top-Down 3D;Aztech;Azerbaijan Technology;15 Nov, 2022;199.99;0;0;0;0.0;0;0;0;6;0;103;none;1;1;1;4.0;0
 774241;Warhammer: Chaosbane;Eko Software;Nacon;31 May, 2019;1.49;0;500000;14;57.72;3505;2567;0;43;13;13;full;1;0;0;6.0;69
 3869680;Silent Still 2;SolitaryStudios;SolitaryStudios;24 Jul, 2025;2.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 3654810;CLOWNCORE;GamesFromTheOtherSide;GamesFromTheOtherSide;25 Jul, 2025;3.99;0;0;0;0.0;0;0;0;7;0;4;none;1;0;0;16.0;0
@@ -21333,7 +21333,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 1808570;Aurora's Journey and the Pitiful Lackey;the Not so Great team;the Not so Great team;13 Jan, 2023;14.95;0;0;0;100.0;7;0;0;27;1;2;full;1;0;1;4.0;0
 1654170;Agony VR;Ignibit;Ignibit;5 Apr, 2023;13.99;0;0;0;0.0;0;0;0;0;0;9;none;1;0;0;10.0;0
 3468430;Idle Together;Eragone;Eragone Games;11 Jul, 2025;3.99;0;0;6;81.82;27;6;0;28;1;2;none;1;0;1;4.0;0
-2691920;MolCollabo v2;FiatLux Corporatoin;FiatLux Corporatoin;3 Feb, 2025;859.5;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;8.0;0
+2691920;MolCollabo v2;FiatLux Corporatoin;FiatLux Corporatoin;3 Feb, 2025;1900.0;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;8.0;0
 2381240;Plantsportation;TankCatGames;TankCatGames;To be announced;0.0;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;4.0;0
 1812140;Magnificent-1;SlothLadDev;SlothLadDev;15 Dec, 2021;2.99;0;50000;0;100.0;3;0;0;0;0;1;none;1;0;1;4.0;0
 406300;Lighthockey;Aries-Lenov;Aries-Lenov;30 Oct, 2015;1.99;0;0;0;72.73;8;3;0;0;0;1;none;1;0;0;0.5;0
@@ -23087,7 +23087,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 3443110;Hexamonia;Digitized Magic;Digitized Magic;2026;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;3.0;0
 681790;ViKubb;Samiri Studios;Whitway Studios;27 Feb, 2020;3.99;0;0;0;95.45;21;1;0;0;0;1;none;1;0;0;4.0;0
 4395980;Hat Together;34ibstudio;Ultimate Publishing;To be announced;0.0;0;0;0;0.0;0;0;0;0;0;12;none;1;0;0;8.0;0
-3484510;Equanimity;Equanimity;Equanimity;11 Feb, 2025;92.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
+3484510;Equanimity;Equanimity;Equanimity;11 Feb, 2025;199.99;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 2401380;Castle Crafter;Dodisoft;Dodisoft;20 Jun, 2023;4.99;0;0;0;100.0;1;0;0;0;0;1;full;1;1;0;4.0;0
 391070;Stellar 2D;quad games;Back To Basics Gaming;30 Jul, 2015;0.9;0;500000;0;40.6;393;575;0;0;0;1;none;1;0;0;0.12;0
 3016730;Memo Blox;Martins Jakobsons;Martins Jakobsons;20 Jun, 2024;0.44;0;0;0;100.0;2;0;0;4;0;10;none;1;0;0;2.0;0
@@ -26097,7 +26097,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 1466570;The Clot Thickens;MGN Studios;;2 Mar, 2021;0.59;0;0;0;50.0;2;2;0;0;0;1;full;1;0;0;2.0;0
 4115250;What the Stars Forgot;Airlock Games;Airlock Games;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;1;none;1;0;0;8.0;0
 3313420;捱光：金瓶梅;RR GAMES;RR GAMES;19 Feb, 2025;3.99;0;0;0;0.0;0;0;0;36;0;1;none;1;0;0;2.0;0
-1787140;RagingFist;healthy game;healthy game;4 Nov, 2021;149.99;0;0;0;0.0;0;1;0;0;0;2;none;1;0;0;2.0;0
+1787140;RagingFist;healthy game;healthy game;4 Nov, 2021;199.99;0;0;0;0.0;0;1;0;0;0;2;none;1;0;0;2.0;0
 2178070;Towers of Aghasba;Dreamlit inc.;Dreamlit inc.;19 Nov, 2024;14.99;0;100000;18;68.6;1241;568;0;34;0;10;none;1;0;1;16.0;0
 4207580;Bag of Dreams;Two Trick Pony;Two Trick Pony;24 Mar, 2026;4.49;0;0;0;0.0;0;0;0;67;0;17;none;1;1;0;2.0;0
 1710910;Sinfeld: Evil Resident;RareBird Games;RareBird Games;To be announced;0.0;1;0;0;0.0;0;0;0;0;0;1;none;1;0;0;3.0;0
@@ -26166,7 +26166,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 4750930;Rabbit Claw Party;ZT-Studio;ZT-Studio;Coming soon;0.0;0;0;0;0.0;0;0;0;0;0;12;full;1;1;0;0.0;0
 341890;HitBox;Tyler Rogers;Wormhole Entertainment;30 Jan, 2017;0.0;1;20000;2;59.59;87;59;0;0;0;1;full;1;0;0;4.0;0
 960710;DON'T GIVE UP: A Cynical Tale;Tristan Barona;Tristan Barona;16 Sep, 2019;9.99;0;0;0;85.39;76;13;0;16;2;1;full;1;1;1;0.25;0
-1955000;3D PUZZLE - Alchemist House;Aztech;Azerbaijan Technology;15 Apr, 2022;200.0;0;0;0;30.43;14;32;0;6;0;103;full;1;1;1;4.0;0
+1955000;3D PUZZLE - Alchemist House;Aztech;Azerbaijan Technology;15 Apr, 2022;199.99;0;0;0;30.43;14;32;0;6;0;103;full;1;1;1;4.0;0
 1475960;Shindig;Imaginary Friends Games LLP;Imaginary Friends Games LLP;2 Sep, 2021;7.99;0;0;0;97.67;42;1;0;10;1;1;none;1;0;0;4.0;0
 3186370;Cadava;Demetree Studios;Demetree Studios;30 Sep, 2024;5.79;0;0;0;100.0;1;0;0;8;0;1;none;1;0;0;4.0;0
 3788940;Gargouti Simulator;chaouki_dev;chaouki_dev;26 Jun, 2025;5.79;0;0;0;0.0;0;0;0;0;0;2;none;1;0;0;4.0;0
@@ -31499,7 +31499,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 1416260;SpellForce 3 Versus Edition;Grimlore Games;THQ Nordic;3 Nov, 2020;0.0;1;200000;79;75.22;1132;373;0;0;1;9;full;1;0;0;6.0;0
 2488510;FatalZone;Midhard Games;101XP;17 Sep, 2024;3.99;0;200000;8;68.78;1531;695;0;330;0;10;full;1;0;0;4.0;0
 325420;Homebrew - Patent Unknown;Copybugpaste;Copybugpaste;14 Nov, 2014;7.99;0;200000;0;72.93;706;262;0;0;0;1;none;1;0;0;4.0;0
-1325400;VEGAS Pro 18 Edit Steam Edition;MAGIX Software GmbH;MAGIX Software GmbH;3 Sep, 2020;89.99;0;200000;23;20.45;478;1859;0;0;0;4;none;1;0;0;8.0;0
+1325400;VEGAS Pro 18 Edit Steam Edition;MAGIX Software GmbH;MAGIX Software GmbH;3 Sep, 2020;149.99;0;200000;23;20.45;478;1859;0;0;0;4;none;1;0;0;8.0;0
 222440;THE KING OF FIGHTERS 2002 UNLIMITED MATCH;SNK CORPORATION, Code Mystics;SNK CORPORATION;27 Feb, 2015;7.99;0;200000;99;94.76;4463;247;0;12;0;4;none;1;0;0;2.0;0
 1517960;Rebirth:Beware of Mr.Wang;DSGame;DSGame;30 Sep, 2021;8.99;0;200000;3;66.31;1366;694;0;12;1;3;none;1;0;0;4.0;0
 623940;HIVESWAP: ACT 1;What Pumpkin Games, Inc.;What Pumpkin Games, Inc.;14 Sep, 2017;7.99;0;200000;4;92.71;3660;288;0;44;1;1;none;1;1;1;4.0;0
@@ -32530,7 +32530,7 @@ appid;name;developer;publisher;release_date;price;is_free;owners_lower_bound;ccu
 1723260;CaseCracker;BlackRobe;BlackRobe;19 Dec, 2022;5.79;0;100000;42;91.01;2613;258;0;27;0;2;none;1;1;0;2.0;0
 432100;Negligee;Dharker Studios;Dharker Studios;19 Oct, 2016;14.99;0;100000;0;80.0;564;141;0;17;7;1;none;1;0;0;1.0;0
 529590;Please, Don't Touch Anything 3D;Escalation Studios, Four Quarters;ForwardXP;7 Dec, 2016;5.79;0;100000;0;82.55;1074;227;0;22;0;14;full;1;1;0;3.0;0
-442710;Fantasy Tales Online;Cold Tea Studio;NA;5 May, 2016;0.0;1;100000;3;68.83;318;144;0;31;1;1;none;1;1;0;2.0;0
+442710;Fantasy Tales Online;Cold Tea Studio;;5 May, 2016;0.0;1;100000;3;68.83;318;144;0;31;1;1;none;1;1;0;2.0;0
 555950;Danganronpa Another Episode: Ultra Despair Girls;Spike Chunsoft Co., Ltd.;Spike Chunsoft Co., Ltd.;27 Jun, 2017;14.99;0;100000;31;85.04;4969;874;0;35;0;4;none;1;0;0;4.0;0
 762240;Fantasy Realm: A Land Torn Asunder;Wildwood Game Studios;Wildwood Game Studios;27 Mar, 2018;7.99;0;100000;0;100.0;5;0;0;0;0;1;full;1;1;0;4.0;0
 591460;Parkasaurus;Washbear Studio;Washbear Studio;12 Aug, 2020;2.49;0;100000;21;93.34;2819;201;0;57;3;11;full;1;0;0;4.0;70

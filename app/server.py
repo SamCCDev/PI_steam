@@ -32,7 +32,10 @@ from app import stats              # noqa: E402
 
 WEB_DIR = os.path.join(ROOT, "web")
 VENDOR_DIR = os.path.join(ROOT, "vendor")
-HOST, PORT = "127.0.0.1", 8000
+# Local: 127.0.0.1:8000. En un host PaaS (Render/Railway) la plataforma inyecta PORT
+# y hay que escuchar en 0.0.0.0 para recibir el tráfico del proxy.
+PORT = int(os.environ.get("PORT", "8000"))
+HOST = os.environ.get("HOST", "0.0.0.0" if "PORT" in os.environ else "127.0.0.1")
 
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
