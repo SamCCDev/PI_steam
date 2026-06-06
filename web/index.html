@@ -146,6 +146,18 @@ input,select,textarea{font-family:inherit}
   padding:12px 15px;border-bottom:1px solid var(--border-soft)}
 .panel-h h3{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text)}
 .panel-h .hint{font-size:10.5px;color:var(--muted)}
+/* ── icono "?" con explicación de cada gráfica/tarjeta (hover) ── */
+.qi{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;border:1px solid var(--border);color:var(--muted);
+  font-size:10px;font-weight:700;cursor:help;margin-left:7px;flex:none;vertical-align:middle;line-height:1}
+.qi:hover{color:var(--accent);border-color:var(--accent)}
+.qi::after{content:attr(data-tip);position:absolute;top:calc(100% + 9px);left:-12px;z-index:80;width:300px;
+  background:#0d1622;border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+  color:var(--text);font-size:11.5px;line-height:1.55;font-weight:400;text-transform:none;letter-spacing:0;
+  white-space:normal;text-align:left;box-shadow:0 12px 32px rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .18s,transform .18s}
+.qi:hover::after{opacity:1;transform:none}
+.qi.qi-r::after{left:auto;right:-12px}
 .panel-b{padding:15px}
 
 /* grids */
@@ -585,11 +597,11 @@ select:focus{border-color:var(--accent-dim)}
           <div class="kpis" id="simKpis"></div>
           <div class="grid" style="grid-template-columns:1.3fr 1fr">
             <div class="panel">
-              <div class="panel-h"><h3>Probabilidad por clase</h3><span class="hint" id="probRefHint">consenso de modelos</span></div>
+              <div class="panel-h"><h3>Probabilidad por clase<span class="qi" data-tip="Promedio (consenso) de las probabilidades que asignan los 3 modelos a cada clase comercial. La clase con la barra más larga es la predicción final del simulador. Suman 100%.">?</span></h3><span class="hint" id="probRefHint">consenso de modelos</span></div>
               <div class="panel-b" id="probBars"></div>
             </div>
             <div class="panel">
-              <div class="panel-h"><h3>Incertidumbre</h3><span class="hint" id="uncRef"></span></div>
+              <div class="panel-h"><h3>Incertidumbre<span class="qi" data-tip="Qué tan confiable es esta predicción. Mide el margen entre las 2 clases más probables y si los 3 modelos están de acuerdo: margen chico o desacuerdo entre modelos = predicción frágil (incertidumbre alta). El gauge muestra la confianza resultante.">?</span></h3><span class="hint" id="uncRef"></span></div>
               <div class="panel-b"><div class="unc"><div class="unc-gauge" id="uncGauge"></div><div class="unc-meta" id="uncMeta"></div></div></div>
             </div>
           </div>
@@ -600,9 +612,9 @@ select:focus{border-color:var(--accent-dim)}
               <div class="legend" id="cmpLegend"></div>
             </div>
             <div class="grid" style="grid-template-columns:1.25fr 1fr">
-              <div class="panel"><div class="panel-h"><h3>Probabilidad · 3 modelos × 3 clases</h3><span class="hint">configuración actual</span></div>
+              <div class="panel"><div class="panel-h"><h3>Probabilidad · 3 modelos × 3 clases<span class="qi" data-tip="Cómo evalúa tu configuración cada uno de los 3 modelos por separado: Regresión Logística (lineal e interpretable), SVM-RBF (fronteras no lineales) y Red Neuronal MLP (el de mejor desempeño). Si los tres coinciden, la predicción es robusta; si divergen, el caso es ambiguo.">?</span></h3><span class="hint">configuración actual</span></div>
                 <div class="panel-b"><div class="chart" id="cmpBars" style="height:240px"></div></div></div>
-              <div class="panel"><div class="panel-h"><h3>Métricas de evaluación</h3><span class="hint" id="cmpFeat"></span></div>
+              <div class="panel"><div class="panel-h"><h3>Métricas de evaluación<span class="qi" data-tip="Desempeño real medido sobre el 20% de test (juegos que los modelos nunca vieron). AUC: capacidad de separar las clases (1 = perfecto, 0.5 = azar). F1: balance entre precisión y recall. Accuracy: % de aciertos. La estrella marca el mejor modelo (MLP).">?</span></h3><span class="hint" id="cmpFeat"></span></div>
                 <div class="panel-b" style="padding:0"><table class="tbl" id="metricsTbl"></table></div></div>
             </div>
           </div>
@@ -627,12 +639,12 @@ select:focus{border-color:var(--accent-dim)}
       </div>
       <div class="grid" style="grid-template-columns:1fr 1.4fr;align-items:start">
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="panel"><div class="panel-h"><h3>P(Hit) · antes vs después</h3></div>
+          <div class="panel"><div class="panel-h"><h3>P(Hit) · antes vs después<span class="qi" data-tip="Probabilidad de Hit de tu configuración actual contra la que tendrías si aplicas el paquete de cambios recomendado completo.">?</span></h3></div>
             <div class="panel-b"><div class="rec-cmp" id="recCmp"></div></div></div>
-          <div class="panel"><div class="panel-h"><h3>Cambios individuales</h3><span class="hint">Δ aislado de cada ajuste</span></div>
+          <div class="panel"><div class="panel-h"><h3>Cambios individuales<span class="qi" data-tip="Efecto de cada ajuste por separado sobre P(Hit), sin combinarlo con los demás. Solo se proponen cambios accionables (tags, categorías, precio) — nunca cambiar de género o estudio.">?</span></h3><span class="hint">Δ aislado de cada ajuste</span></div>
             <div class="panel-b" id="recIndiv"></div></div>
         </div>
-        <div class="panel"><div class="panel-h"><h3>Mejor paquete de cambios</h3><span class="hint">aplicados de forma acumulada</span></div>
+        <div class="panel"><div class="panel-h"><h3>Mejor paquete de cambios<span class="qi" data-tip="Búsqueda voraz: en cada paso se aplica el cambio que más sube P(Hit) dado lo ya aplicado, hasta 3 pasos. La curva muestra el efecto acumulado paso a paso. Los efectos NO son la suma de los individuales: hay interacciones entre features.">?</span></h3><span class="hint">aplicados de forma acumulada</span></div>
           <div class="panel-b"><div class="steplist" id="recPackage"></div>
             <div class="chart sm" id="recChart" style="margin-top:14px"></div></div></div>
       </div>
@@ -1494,7 +1506,7 @@ function renderSimResults(r){
   if(tw && r.embudo){
     const e=r.embudo, seg=[['NoTraccion','Sin tracción','#46525f'],['Flop','Flop','#c75450'],['Rentable','Rentable','#66c0f4'],['Hit','Hit','#a4d007']];
     tw.innerHTML=`<div class="panel" style="margin-bottom:14px"><div class="panel-h">
-        <h3>Embudo comercial · 2 etapas</h3><span class="hint">Etapa 1: ¿logra tracción? × Etapa 2: clase | vende</span></div>
+        <h3>Embudo comercial · 2 etapas<span class="qi" data-tip="Dos modelos encadenados. Etapa 1: probabilidad de que el juego logre tracción comercial (que SteamSpy le estime ventas), entrenada con 17.565 juegos. Etapa 2: si vende, ¿es Flop, Rentable o Hit? Las 4 franjas suman 100%: sin tracción + Flop + Rentable + Hit.">?</span></h3><span class="hint">Etapa 1: ¿logra tracción? × Etapa 2: clase | vende</span></div>
       <div class="panel-b"><div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
         <div style="text-align:center;flex:0 0 auto">
           <div style="font-family:var(--display);font-size:32px;font-weight:700;color:var(--accent);line-height:1">${pct(r.traccion)}%</div>
@@ -1509,16 +1521,16 @@ function renderSimResults(r){
   // KPIs con stagger
   const tier=cons.clase, tc={Flop:'flop',Rentable:'rent',Hit:'hit'}[tier];
   $('#simKpis').innerHTML=`
-    <div class="kpi k-${tc}" style="--i:0"><div class="kpi-label">Clasificación</div>
+    <div class="kpi k-${tc}" style="--i:0"><div class="kpi-label">Clasificación<span class="qi" data-tip="La clase comercial con mayor probabilidad según el consenso (promedio) de los 3 modelos: Flop (<200k owners), Rentable (200k–1M) o Hit (≥1M).">?</span></div>
       <div class="kpi-val sm" style="color:${CLASS_COLOR[tier]}">${tier}</div>
       <span class="kpi-tag tag-${tc}">consenso · 3 modelos</span></div>
-    <div class="kpi k-rent" style="--i:1"><div class="kpi-label">Prob. de no-Flop</div>
+    <div class="kpi k-rent" style="--i:1"><div class="kpi-label">Prob. de no-Flop<span class="qi" data-tip="P(Rentable) + P(Hit): probabilidad de que el juego al menos recupere la inversión. Es la métrica de riesgo más útil para decidir si lanzar.">?</span></div>
       <div class="kpi-val"><span id="kNoflop">0</span><span style="font-size:18px;color:var(--muted)">%</span></div>
       <div class="kpi-sub">Rentable + Hit combinados</div></div>
-    <div class="kpi k-hit" style="--i:2"><div class="kpi-label">Owners estimados</div>
+    <div class="kpi k-hit" style="--i:2"><div class="kpi-label">Owners estimados<span class="qi" data-tip="Número de propietarios que estima una regresión independiente (Gradient Boosting). De aquí sale el punto 'Tu juego' en el scatter del panel analítico y la clase por umbrales ajustables.">?</span></div>
       <div class="kpi-val"><span id="kOwners">0</span></div>
       <div class="kpi-sub">umbral Hit ≥ 1.0M · Flop &lt; 200K</div></div>
-    <div class="kpi" style="--i:3"><div class="kpi-label">Ingreso bruto est.</div>
+    <div class="kpi" style="--i:3"><div class="kpi-label">Ingreso bruto est.<span class="qi qi-r" data-tip="Aproximación: owners estimados × precio × 70% (Steam retiene ~30%). No descuenta rebajas, impuestos ni precios regionales — es una cota optimista de referencia.">?</span></div>
       <div class="kpi-val">$<span id="kRev">0</span></div>
       <div class="kpi-sub">tras corte de Steam (30%)</div></div>`;
   animateNum($('#kNoflop'),pct(noFlop),v=>Math.round(v));
@@ -1589,20 +1601,27 @@ window.addEventListener('resize',()=>Object.values(charts).forEach(c=>c.resize()
 /* ============================================================ VIEW: Panel analítico */
 let anBuilt=false;
 function buildAnGrid(){
-  // [id, título, gridColumn span, height px, hint]
+  // [id, título, gridColumn span, height px, hint, explicación (tooltip "?")]
   const defs=[
-    ['anMarket','Distribución de mercado','span 4',240,'clases del dataset'],
-    ['anPrice','Histograma de precios','span 8',240,'nº de juegos por rango ($)'],
-    ['anImp','Importancia de variables','span 6',470,'coef. logístico · top 24 variables (hacia Hit / hacia no-Hit)'],
-    ['anGenre','Owners y % Hit por género','span 6',470,'mediana de owners + tasa de Hit'],
-    ['anScatter','Precio vs Owners','span 7',300,'~480 juegos · escala log'],
-    ['anConf','Matriz de confusión','span 5',300,'modelo MLP · test set'],
-    ['anQuarter','% Hit por trimestre','span 12',200,'estacionalidad de lanzamiento']
+    ['anMarket','Distribución de mercado','span 4',240,'clases del dataset',
+      'Cómo se reparte el catálogo recolectado. Los juegos con ventas estimables se clasifican en Flop (<200k owners), Rentable (200k–1M) y Hit (≥1M); el segmento gris no tiene estimación de ventas de SteamSpy. Estas 3 clases son la variable objetivo que el modelo aprende a predecir.'],
+    ['anPrice','Histograma de precios','span 8',240,'nº de juegos por rango ($)',
+      'Cuántos juegos lanza el mercado en cada rango de precio: la gran mayoría sale por debajo de $10. La barra blanca marca el rango donde cae el precio de tu juego simulado — te dice contra cuánta competencia compites en ese segmento.'],
+    ['anImp','Importancia de variables','span 6',470,'coef. logístico · top 24 variables (hacia Hit / hacia no-Hit)',
+      'Coeficientes de la Regresión Logística hacia la clase Hit. Verde = características que AUMENTAN la probabilidad de Hit (p. ej. más tags, multiplayer); rojo = la REDUCEN. Es la evidencia de qué variables pesan más en la decisión del modelo, y la base del motor de recomendaciones.'],
+    ['anGenre','Owners y % Hit por género','span 6',470,'mediana de owners + tasa de Hit',
+      'Por género: la barra es la mediana de propietarios y la línea el % de juegos que llegan a Hit. Sirve para comparar nichos — un género con pocos lanzamientos pero % Hit alto está menos saturado. En verde, los géneros activos en tu configuración del simulador.'],
+    ['anScatter','Precio vs Owners','span 7',300,'muestra · escala log',
+      'Cada punto es un juego real del dataset: precio (X) contra propietarios (Y, escala logarítmica), coloreado por clase. Pasa el cursor para ver el nombre. El diamante blanco es TU juego simulado: muestra dónde quedaría parado frente al mercado real.'],
+    ['anConf','Matriz de confusión','span 5',300,'modelo MLP · test set',
+      'Aciertos y errores del mejor modelo (MLP) sobre el 20% de test que nunca vio en entrenamiento. Filas = clase real, columnas = predicción. La diagonal son aciertos; fuera de ella, confusiones (p. ej. Hits que el modelo predijo como Rentable: el error más común).'],
+    ['anQuarter','% Hit por trimestre','span 12',200,'estacionalidad de lanzamiento',
+      'Estacionalidad del lanzamiento: % de Hits (barras) y % de juegos que al menos recuperan inversión —Rentable o Hit— (línea) según el trimestre en que salieron. Q4 (fiestas) concentra la tasa de Hit más alta. La barra blanca es el trimestre elegido en tu simulación.']
   ];
   const grid=$('#anGrid'); grid.innerHTML='';
-  defs.forEach(([id,title,span,h,hint])=>{
+  defs.forEach(([id,title,span,h,hint,tip])=>{
     const card=document.createElement('div'); card.className='panel'; card.style.gridColumn=span;
-    card.innerHTML=`<div class="panel-h"><h3>${title}</h3><span class="hint" id="hint_${id}">${hint}</span></div>
+    card.innerHTML=`<div class="panel-h"><h3>${title}${tip?`<span class="qi" data-tip="${tip}">?</span>`:''}</h3><span class="hint" id="hint_${id}">${hint}</span></div>
       <div class="panel-b" style="padding:8px 10px 12px"><div id="${id}" style="width:100%;height:${h}px"></div></div>`;
     grid.appendChild(card);
   });

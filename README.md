@@ -5,6 +5,9 @@ videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hi
 datos de Steam/SteamSpy, un pipeline de entrenamiento reproducible y un **dashboard interactivo con backend
 local** (estética Steam) que compara tres modelos, explica sus predicciones y recomienda mejoras.
 
+> **Demo en línea:** <https://steampredict.onrender.com> — corre en el plan free de Render: si nadie
+> lo visitó en los últimos 15 minutos, el primer acceso tarda ~30-60 s en despertar el servicio.
+>
 > Documentación del proyecto:
 > - [`docs/Documento Tecnico - Predictor de Videojuegos.md`](docs/Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación original (objetivo, arquitectura, diccionario).
 > - [`docs/Plan v2 - Dashboard Comercial Customizable.md`](docs/Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) — plan y bitácora de desarrollo.
@@ -28,7 +31,10 @@ dashboard funciona sin reentrenar y **sin conexión a internet**.
 
 El dashboard tiene 5 vistas: **Simulador** (embudo de 2 etapas + predicción + incertidumbre), **Comparar
 modelos** (LR/SVM/MLP lado a lado), **Juegos del mismo camino** (vecinos reales), **Recomendaciones** (mejor
-paquete de cambios para subir P(Hit)) y **Panel analítico** (gráficos del mercado).
+paquete de cambios para subir P(Hit)) y **Panel analítico** (7 gráficos del mercado con datos vivos del
+backend, que además **reaccionan a la simulación**: marcan tu rango de precio, tus géneros, tu trimestre y
+ubican "Tu juego" en el scatter precio/owners). Cada gráfica y tarjeta lleva un icono **?** con la
+explicación de qué muestra y cómo leerla.
 
 ---
 
@@ -51,12 +57,14 @@ El mismo entrenamiento corre en **Databricks** (`notebooks/08_train_all.py`) par
 
 ```text
 ├── README.md                     # esta guía
-├── requirements.txt              # dependencias del entrenamiento (el backend no necesita nada)
+├── requirements.txt              # versiones exactas (los .joblib requieren scikit-learn 1.8.0)
+├── render.yaml                   # blueprint del despliegue en Render (plan free)
 ├── scripts/                      # pipeline de datos y entrenamiento (correr desde la raíz)
 │   ├── steam_etl.py              #   ETL concurrente (Steam Storefront + SteamSpy + Reviews)
 │   ├── build_dataset_v2.py       #   consolida los 4 CSV en el master ML-ready (features v2)
 │   ├── train_models.py           #   entrena LR/SVM/MLP + regresor de owners + NN -> models/
-│   └── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
+│   ├── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
+│   └── fix_price_outliers.py     #   repara precios de moneda regional re-consultando Steam (cc=us)
 ├── app/                          # backend (Python stdlib, sin dependencias)
 │   ├── server.py                 #   http.server + router de endpoints
 │   ├── inference.py              #   carga de modelos, predict, recommend, similar, embudo
@@ -107,12 +115,20 @@ Tres clasificadores con el mismo preprocesamiento (estandarización + one-hot + 
 | Modelo | AUC (OVR-macro) | F1 (macro) | Accuracy |
 | :--- | :---: | :---: | :---: |
 | Regresión Logística | 0.884 | 0.692 | 0.697 |
-| SVM (RBF) | 0.881 | 0.720 | 0.739 |
-| **MLP (ReLU)** | **0.888** | **0.740** | **0.772** |
+| SVM (RBF) | 0.881 | 0.719 | 0.739 |
+| **MLP (ReLU)** | **0.890** | **0.741** | **0.769** |
 
 Medido en test (split 80/20 estratificado sobre 7.817 juegos con `owners>0`). Balance de clases
 27% Flop / 54% Rentable / 18% Hit. El MLP es el modelo de referencia del dashboard; la LR se conserva por
 interpretabilidad. Detalle y matrices de confusión en la documentación del estudio.
+
+### Calidad de datos: precios de moneda regional
+
+El scrape original capturó 46 precios en moneda regional o de otra edición (Cyberpunk 2077 a $199,
+Red Dead Redemption 2 a $53.990). `scripts/fix_price_outliers.py` los re-consulta contra la Steam
+Storefront API forzando región US (`cc=us`) y reescribe `games_metadata.csv` (con respaldo `.bak`);
+los precios altos legítimos (RPG Maker, juegos de precio-broma a $200) se conservan. Tras la
+reparación se regeneró el dataset y se reentrenaron los 5 modelos.
 
 ### Embudo de dos etapas
 

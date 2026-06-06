@@ -94,8 +94,8 @@ F1-macro, exactitud y la matriz de confusión 3×3, todas sobre el conjunto de p
 | Modelo | AUC (OVR-macro) | F1-macro | Exactitud |
 |--------|:---:|:---:|:---:|
 | Regresión logística | 0,884 | 0,692 | 0,697 |
-| SVM (RBF) | 0,881 | 0,720 | 0,739 |
-| Perceptrón multicapa | **0,888** | **0,740** | **0,772** |
+| SVM (RBF) | 0,881 | 0,719 | 0,739 |
+| Perceptrón multicapa | **0,890** | **0,741** | **0,769** |
 
 Los tres modelos discriminan de forma parecida en AUC (alrededor de 0,88). El perceptrón obtiene la mejor
 exactitud y F1, así que es el modelo de referencia del dashboard. La regresión logística rinde algo menos pero
@@ -109,14 +109,14 @@ Filas: categoría real. Columnas: categoría predicha.
 
 | real \ predicho | Flop | Rentable | Hit |
 |---|:---:|:---:|:---:|
-| **Flop** | 296 | 121 | 12 |
-| **Rentable** | 65 | 737 | 45 |
-| **Hit** | 21 | 93 | 174 |
+| **Flop** | 299 | 119 | 11 |
+| **Rentable** | 71 | 721 | 55 |
+| **Hit** | 24 | 81 | 183 |
 
-La sensibilidad por categoría es 69 % en Flop (296/429), 87 % en Rentable (737/847) y 60 % en Hit (174/288).
+La sensibilidad por categoría es 70 % en Flop (299/429), 85 % en Rentable (721/847) y 64 % en Hit (183/288).
 Casi toda la confusión ocurre entre categorías vecinas: un Flop se confunde con Rentable mucho más que con Hit,
 y lo mismo pasa entre Hit y Rentable. Eso es razonable porque la variable es ordinal; el modelo rara vez salta
-de un extremo al otro (solo 12 Flop reales fueron predichos como Hit, y 21 Hit como Flop). La categoría Hit es
+de un extremo al otro (solo 11 Flop reales fueron predichos como Hit, y 24 Hit como Flop). La categoría Hit es
 la más difícil, lo que concuerda con que es la minoritaria y la que depende de factores externos al juego
 (marketing, comunidad, momento de mercado) que el modelo no observa.
 
@@ -179,6 +179,27 @@ etapa 2, los cuatro resultados (sin tracción / Flop / Rentable / Hit). La lecci
 un AUC alto puede esconder un sesgo de recolección; auditar los coeficientes lo reveló, y filtrar por completitud
 de metadata recuperó un modelo válido sin descargar más datos.
 
+### 5.7 Calidad de datos: reparación de precios en moneda regional
+
+Durante las pruebas del simulador se detectó que varios títulos muy conocidos figuraban con precios
+imposibles: Cyberpunk 2077 a 199 dólares, ELDEN RING a 249 o Red Dead Redemption 2 a 53.990. La revisión del
+origen mostró que el ETL había capturado, para 46 juegos, el precio en moneda regional o el de una edición
+especial vigente en el momento del scrape, y que el constructor del dataset los recortaba después al tope de
+200 dólares. El error afectaba sobre todo a títulos AAA, justamente los más visibles al validar el modelo.
+
+La reparación fue quirúrgica: un script (`scripts/fix_price_outliers.py`) re-consultó únicamente esos 46
+appids contra la Steam Storefront API forzando la región estadounidense (`cc=us`) y reescribió el precio en
+la tabla de metadatos, conservando un respaldo del archivo original. Los precios altos legítimos —software
+como RPG Maker o juegos cuyo precio elevado es deliberado, como "This Game Costs 200 Dollars"— se mantuvieron
+intactos. Tras la corrección se regeneró el dataset completo y se reentrenaron los cinco modelos; el
+perceptrón mejoró ligeramente (AUC de 0,888 a 0,890 y sensibilidad de Hit de 60 % a 64 %), señal de que el
+ruido de precios estaba degradando una de las variables con mayor peso.
+
+Quedan dos lecciones para la sección de limitaciones. Primero, el precio de un catálogo internacional debe
+extraerse fijando explícitamente la región desde el inicio del ETL. Segundo, una validación temprana con
+casos conocidos (¿cuánto cuesta Cyberpunk?) habría detectado el problema antes del primer entrenamiento;
+incorporamos esa verificación a la rutina de pruebas del dashboard.
+
 ## 6. Ingeniería de datos
 
 El proyecto incorpora tres técnicas vistas en la asignatura de Ingeniería de Datos, aplicadas al conjunto de
@@ -199,11 +220,20 @@ notebook 08, que deja las métricas y los coeficientes como tablas de Unity Cata
 
 ## 7. Producto
 
-El resultado visible es un panel local. El backend (Python estándar, sin dependencias externas) carga los
-modelos y expone una API; el frontend, con estética inspirada en Steam, ofrece cinco vistas: simulador,
-comparación de los tres modelos, juegos reales de perfil parecido, recomendaciones para mejorar la
-probabilidad de Hit y un panel analítico con gráficos del mercado. Funciona sin conexión, lo que permite
-mostrarlo en la exposición sin depender de la red.
+El resultado visible es un dashboard con dos modos de uso: local (sin conexión, útil para la exposición) y
+**en línea**, desplegado en el plan gratuito de Render en <https://steampredict.onrender.com>. El backend
+(Python estándar, sin dependencias externas) carga los modelos y expone una API; el frontend, con estética
+inspirada en Steam, ofrece cinco vistas: simulador, comparación de los tres modelos, juegos reales de perfil
+parecido, recomendaciones para mejorar la probabilidad de Hit y un panel analítico con siete gráficos del
+mercado.
+
+El panel analítico no es estático: además de alimentarse de los agregados reales del backend, reacciona a la
+simulación en curso. El histograma de precios marca el rango donde cae el precio configurado, el gráfico de
+géneros resalta los géneros activos, el de estacionalidad señala el trimestre elegido y el diagrama de
+dispersión precio-propietarios sitúa al juego simulado (con su clase y probabilidad de Hit) entre 1.200
+juegos reales identificables por nombre. Cada gráfico y cada tarjeta del simulador incluye un icono de ayuda
+con una explicación de qué muestra, cómo se calcula y cómo leerlo, pensada para que el panel se entienda sin
+necesidad de un presentador al lado.
 
 ## 8. Limitaciones y trabajo futuro
 
