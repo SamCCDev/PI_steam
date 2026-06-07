@@ -1,6 +1,6 @@
 """
 ==============================================================================
-  SERVER — Backend del Dashboard v2 con la librería estándar de Python
+  SERVER — Backend del Dashboard con la librería estándar de Python
 ==============================================================================
   Sin dependencias externas: usa http.server. Sirve la API y el frontend.
 
@@ -139,7 +139,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 60)
-    print(f"  SteamPredict v2  ->  http://{HOST}:{PORT}")
+    print(f"  SteamPredict  ->  http://{HOST}:{PORT}")
     print(f"  Modelos: {list(inf.MODELS.keys())}  |  juegos: {len(inf.DF):,}")
     print(f"  Features mutables (recomendador): {len(inf.MUTABLE_BOOLS)}")
     print("  Ctrl+C para detener.")

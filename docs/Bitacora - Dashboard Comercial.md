@@ -1,4 +1,6 @@
-# Plan v2 — Dashboard Comercial Customizable (SteamPredict)
+# Bitácora de desarrollo — Dashboard Comercial (SteamPredict)
+
+> Registro histórico del desarrollo. No es documentación oficial del estudio (ver `docs/Documentacion del Estudio - Predictor.md`); conserva las decisiones y fechas tal como ocurrieron.
 
 > **Documento vivo / bitácora.** Sirve para dos cosas: (1) fijar el diseño de la versión 2 antes de
 > escribir código y (2) registrar el avance. Cada fase tiene checkboxes; se marcan a medida que se completan.

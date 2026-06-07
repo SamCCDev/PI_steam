@@ -5,7 +5,7 @@
   Pregunta: ¿el juego logrará tracción comercial (ventas estimables por SteamSpy)?
   Target binario `tiene_ventas = owners_lower_bound > 0` sobre TODOS los juegos
   (~33k), no solo los que ya venden. Reutiliza la ingeniería de features de
-  build_dataset_v2.py (sin dev_success_prior, que es propio de la etapa 2).
+  build_dataset.py (sin dev_success_prior, que es propio de la etapa 2).
 
   El simulador combina:  P(no-tracción) = 1 - P(vende)
                          P(Flop|Rent|Hit) = P(vende) · etapa2(Flop|Rent|Hit)
@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, confusion_matrix
 import joblib
 
-import build_dataset_v2 as bd   # reutiliza los helpers de derivación
+import build_dataset as bd   # reutiliza los helpers de derivación
 
 ROOT = Path(__file__).resolve().parent.parent   # raíz del repo (scripts/ está un nivel adentro)
 OUTPUT_DIR = ROOT / "output"

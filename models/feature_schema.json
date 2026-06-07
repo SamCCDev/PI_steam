@@ -148,13 +148,6 @@
     "is_early_access"
   ],
   "categorical": {
-    "controller_support": {
-      "categories": [
-        "full",
-        "none"
-      ],
-      "default": "none"
-    },
     "dev_experience": {
       "categories": [
         "AAA",
@@ -163,6 +156,13 @@
       ],
       "default": "Novato"
     },
+    "controller_support": {
+      "categories": [
+        "full",
+        "none"
+      ],
+      "default": "none"
+    },
     "pub_experience": {
       "categories": [
         "AAA",
@@ -170,6 +170,15 @@
         "Novato"
       ],
       "default": "Novato"
+    },
+    "price_tier": {
+      "categories": [
+        "Budget",
+        "F2P",
+        "Mid",
+        "Premium"
+      ],
+      "default": "Budget"
     },
     "release_quarter": {
       "categories": [
@@ -180,15 +189,6 @@
         "Q4"
       ],
       "default": "Desconocido"
-    },
-    "price_tier": {
-      "categories": [
-        "Budget",
-        "F2P",
-        "Mid",
-        "Premium"
-      ],
-      "default": "Budget"
     }
   },
   "dev_prior_global": 0.7257,
@@ -280,11 +280,11 @@
     "tag_fps",
     "tag_stealth",
     "is_early_access",
-    "controller_support",
     "dev_experience",
+    "controller_support",
     "pub_experience",
-    "release_quarter",
-    "price_tier"
+    "price_tier",
+    "release_quarter"
   ],
   "models": [
     "lr",

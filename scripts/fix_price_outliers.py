@@ -4,13 +4,13 @@
 ==============================================================================
   Problema: ~46 juegos (casi todos AAA: Cyberpunk 2077, ELDEN RING, RDR2...)
   quedaron con precios de 100-200+ USD en games_metadata.csv. El scrape
-  original capturó precios de otra región/edición y build_dataset_v2 los
+  original capturó precios de otra región/edición y build_dataset los
   clava en PRICE_CAP_USD=200, lo que distorsiona la feature `price` para
   esos títulos.
 
   Solución: re-consultar SOLO esos appids contra la Steam Storefront API
   forzando región US (cc=us) y sobrescribir el precio en games_metadata.csv
-  (con respaldo .bak). Luego re-correr build_dataset_v2 + entrenamientos.
+  (con respaldo .bak). Luego re-correr build_dataset + entrenamientos.
 
   Uso:
       python scripts/fix_price_outliers.py            # umbral por defecto $70
@@ -89,7 +89,7 @@ def main():
 
     df.to_csv(META, sep=";", index=False)
     print(f"\nlisto: {fixed} corregidos, {skipped} sin cambio. Ahora corre:")
-    print("  python scripts/build_dataset_v2.py")
+    print("  python scripts/build_dataset.py")
     print("  python scripts/train_models.py")
     print("  python scripts/train_stage1.py")
 

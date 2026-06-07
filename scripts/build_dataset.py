@@ -1,9 +1,9 @@
 """
 ==============================================================================
-  BUILD DATASET v2 — Master ML-ready con features ampliadas (Dashboard v2)
+  BUILD DATASET — Master ML-ready con features ampliadas
 ==============================================================================
   Consolida los 4 CSV relacionales (metadata/tags/text/timeseries) en el master
-  ML-ready, con la etiqueta multiclase y las features nuevas de la v2:
+  ML-ready, con la etiqueta multiclase y las features nuevas del proyecto:
 
     - num_genres / num_tags / num_categories  (riqueza de catálogo del juego)
     - release_quarter (categórica, estacionalidad) + release_year/month (análisis)
@@ -260,7 +260,7 @@ def build():
                              "is_early_access", "dev_success_prior"] if c in feats]
     balance = df["label_name"].value_counts(normalize=True).round(3).to_dict()
     print("\n" + "=" * 64)
-    print("  DATASET ML v2 CONSTRUIDO")
+    print("  DATASET ML CONSTRUIDO")
     print("=" * 64)
     print(f"  Filas (juegos):           {len(df):,}")
     print(f"  Columnas totales:         {len(df.columns)}")

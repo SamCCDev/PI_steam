@@ -23,9 +23,9 @@
     "accuracy": 0.7385
   },
   "mlp": {
-    "auc_ovr_macro": 0.8899,
-    "f1_macro": 0.7413,
-    "accuracy": 0.7692
+    "auc_ovr_macro": 0.8941,
+    "f1_macro": 0.751,
+    "accuracy": 0.7826
   },
   "owners_regressor": {
     "r2_log": 0.6273,

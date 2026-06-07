@@ -1,13 +1,28 @@
 # Predictor de Éxito Comercial de Videojuegos en Steam
 
-Sistema de Machine Learning que estima, **antes del lanzamiento**, en qué categoría comercial caerá un
-videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hit** (≥1M). El alcance del
-estudio es exclusivamente **pre-lanzamiento**: todos los modelos usan solo variables conocibles antes de
-publicar el juego (precio, géneros, tags, idiomas, experiencia del estudio…), nunca reseñas ni métricas
-posteriores a la venta.
+### ▶ Demo en vivo: **https://steampredict.onrender.com**
 
-> **Demo en línea:** <https://steampredict.onrender.com> — corre en el plan free de Render: si nadie
-> lo visitó en los últimos 15 minutos, el primer acceso tarda ~30-60 s en despertar el servicio.
+> Alojado en el plan gratuito de Render. Si nadie lo visitó en los últimos ~15 minutos, el primer acceso
+> tarda **30–60 s** en "despertar" el servidor; el dashboard muestra una pantalla de carga mientras tanto.
+
+Sistema de Machine Learning que estima, **antes del lanzamiento**, en qué categoría comercial caerá un
+videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hit** (≥1M). Todo el modelado es
+estrictamente **pre-lanzamiento**: usa solo variables conocibles antes de publicar el juego (precio, géneros,
+tags, idiomas, experiencia del estudio…), nunca reseñas ni métricas posteriores a la venta.
+
+---
+
+## Índice
+
+- [Inicio rápido (local)](#inicio-rápido-local)
+- [El dashboard](#el-dashboard)
+- [Modelos y resultados](#modelos-y-resultados)
+- [Datos](#datos)
+- [Reproducir el pipeline](#reproducir-el-pipeline)
+- [Entrenamiento en Databricks](#entrenamiento-en-databricks)
+- [Ingeniería de datos](#apartado-de-ingeniería-de-datos)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Documentación](#documentación)
 
 ---
 
@@ -25,6 +40,8 @@ python app/server.py
 
 Abre **http://127.0.0.1:8000**. Los modelos entrenados (`models/*.joblib`) ya vienen en el repo, así que el
 dashboard funciona sin reentrenar.
+
+---
 
 ## El dashboard
 
@@ -53,11 +70,11 @@ Tres clasificadores con el mismo preprocesamiento (estandarización + one-hot + 
 | :--- | :---: | :---: | :---: |
 | Regresión Logística | 0.884 | 0.692 | 0.697 |
 | SVM (RBF) | 0.881 | 0.719 | 0.739 |
-| **MLP (ReLU)** | **0.890** | **0.741** | **0.769** |
+| **MLP (ReLU)** | **0.894** | **0.751** | **0.783** |
 
 Medido en test (split 80/20 estratificado sobre 7.817 juegos con `owners>0`). Balance de clases
 27% Flop / 54% Rentable / 18% Hit. El MLP es el modelo de referencia del dashboard; la LR se conserva por
-interpretabilidad. Detalle y matrices de confusión en la documentación del estudio.
+interpretabilidad. Detalle, matrices de confusión y una guía de conceptos están en la documentación del estudio.
 
 ### Embudo de dos etapas
 
@@ -73,12 +90,12 @@ filtrar daba un AUC engañoso (0.96) por un sesgo de recolección; el detalle es
 ### Flujo de extremo a extremo
 
 ```
-1. ETL          scripts/steam_etl.py        → output/*.csv          (4 tablas crudas de Steam/SteamSpy)
-2. Dataset      scripts/build_dataset_v2.py → output/dataset_ml.csv (1 fila/juego, 92 features, sin nulos)
-3. Entreno      scripts/train_models.py     → models/*.joblib       (LR, SVM-RBF, MLP, owners, NN) + reports/
-                scripts/train_stage1.py     → models/stage1.joblib  (etapa 1 del embudo: tracción)
-4. Backend      app/server.py               → carga los .joblib y expone /api/* (predict, recommend, …)
-5. Frontend     web/index.html              → consume /api/* y dibuja las 5 vistas
+1. ETL          scripts/steam_etl.py       → output/*.csv          (4 tablas crudas de Steam/SteamSpy)
+2. Dataset      scripts/build_dataset.py   → output/dataset_ml.csv (1 fila/juego, 92 features, sin nulos)
+3. Entreno      scripts/train_models.py    → models/*.joblib       (LR, SVM-RBF, MLP, owners, NN) + reports/
+                scripts/train_stage1.py    → models/stage1.joblib  (etapa 1 del embudo: tracción)
+4. Backend      app/server.py              → carga los .joblib y expone /api/* (predict, recommend, …)
+5. Frontend     web/index.html             → consume /api/* y dibuja las 5 vistas
 ```
 
 Embudo de datos: **32.966** juegos recolectados → **17.565** con metadata completa (universo de la etapa 1)
@@ -91,7 +108,7 @@ así que se **excluyen** del modelado las variables que solo se conocen tras lan
 (`positive`/`negative`), valoración, Metacritic, jugadores concurrentes (`ccu`) y los agregados `ts_*`. El
 diccionario `output/dataset_ml_dictionary.csv` marca el rol y la `etapa` de cada columna.
 
-Features propias de la v2: conteos de catálogo (`num_tags`, `num_genres`, `num_categories`), `release_quarter`,
+Features de catálogo: conteos (`num_tags`, `num_genres`, `num_categories`), `release_quarter`,
 `pub_experience`/`pub_game_count`, `price_tier`, `is_early_access` y `dev_success_prior` (prior bayesiano por
 estudio calculado *leave-one-out* para no filtrar la propia etiqueta).
 
@@ -105,43 +122,17 @@ reparación se regeneró el dataset y se reentrenaron los modelos.
 
 ---
 
-## Estructura del proyecto
-
-```text
-├── README.md                     # esta guía
-├── requirements.txt              # versiones exactas (los .joblib requieren scikit-learn 1.8.0)
-├── render.yaml                   # blueprint del despliegue en Render (plan free)
-├── scripts/                      # pipeline de datos y entrenamiento (correr desde la raíz)
-│   ├── steam_etl.py              #   ETL concurrente (Steam Storefront + SteamSpy + Reviews)
-│   ├── build_dataset_v2.py       #   consolida los 4 CSV en el master ML-ready (features v2)
-│   ├── train_models.py           #   entrena LR/SVM/MLP + regresor de owners + NN -> models/
-│   ├── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
-│   └── fix_price_outliers.py     #   repara precios de moneda regional re-consultando Steam (cc=us)
-├── app/                          # backend (Python stdlib, sin dependencias)
-│   ├── server.py                 #   http.server + router de endpoints
-│   ├── inference.py              #   carga de modelos, predict, recommend, similar, embudo
-│   └── stats.py                  #   agregados para el panel analítico
-├── web/index.html                # frontend completo (una sola página, ECharts, estética Steam)
-├── vendor/                       # tailwind.js, lucide.js, echarts.min.js (offline)
-├── docs/                         # Documento Tecnico · Plan v2 · Documentacion del Estudio
-├── models/                       # *.joblib + feature_schema.json + stage1.joblib
-├── reports/                      # metrics.json, confusion_*.json, stage1.json
-├── notebooks/                    # Databricks: 01–08 (08 = entrenamiento v2 consolidado)
-├── ingenieria_datos/             # apartado del curso: anonimización SHA-256 + Spark RDD
-└── output/                       # datasets (CSV, separador ';')
-```
-
 ## Reproducir el pipeline
 
 ```bash
 python scripts/steam_etl.py --sample 2000 --source steamspy   # (opcional) traer más juegos
-python scripts/build_dataset_v2.py                            # regenerar el master con features v2
+python scripts/build_dataset.py                               # regenerar el master con todas las features
 python scripts/train_models.py                                # modelos LR/SVM/MLP + owners + NN
 python scripts/train_stage1.py                                # etapa 1 del embudo: tracción (filtrado)
 python app/server.py                                          # levantar el dashboard
 ```
 
-`build_dataset_v2.py` es *schema-driven* (detecta tags/géneros por prefijo y descarta columnas
+`build_dataset.py` es *schema-driven* (detecta tags/géneros por prefijo y descarta columnas
 casi-constantes) e idempotente: re-ejecutar tras actualizar los CSV regenera todo.
 
 ### ETL — uso de `steam_etl.py`
@@ -159,30 +150,64 @@ Produce 4 CSV relacionales en `output/` (separador `;`): `games_metadata`, `game
 
 ---
 
-## Entrenamiento en Databricks (Free Edition)
+## Entrenamiento en Databricks
 
-`notebooks/08_train_all.py` reproduce `train_models.py` en Databricks: lee la tabla `dataset_ml` de Unity
-Catalog, entrena LR (con `GridSearchCV`), SVM-RBF y MLP, y guarda métricas y coeficientes como tablas UC
-(`model_metrics_v2`, `model_lr_coefficients_v2`).
+El entrenamiento tiene **una sola fuente**: `scripts/train_models.py`. El mismo archivo detecta dónde corre —
+en local lee `output/dataset_ml.csv` y guarda los `.joblib`; en Databricks lee la tabla de Unity Catalog
+`dataset_ml` y guarda las métricas y coeficientes como tablas (`model_metrics`, `model_lr_coefficients`). El
+notebook `notebooks/08_train_all.py` no duplica nada: solo importa y ejecuta ese archivo, de modo que el
+resultado es idéntico al local.
 
 **Configuración (una vez):**
-1. Generar el master local: `python scripts/build_dataset_v2.py`.
+1. Generar el master local: `python scripts/build_dataset.py`.
 2. Subir `output/dataset_ml.csv` como tabla **`dataset_ml`** (Catalog → Create Table → CSV, separador `;`).
-3. Importar el notebook y ejecutarlo. Ajustar `CATALOG`/`SCHEMA` si no son `workspace`/`default`.
+3. Importar el notebook 08 y ejecutarlo (ajustar `UC_DATASET`/`UC_METRICS`/`UC_COEF` en `train_models.py` si
+   el catálogo/esquema no son `workspace`/`default`).
 
 **Restricciones de Free Edition (serverless) respetadas:** MLlib clásica bloqueada → se usa scikit-learn sobre
 `toPandas()`; DBFS público deshabilitado → datos como tablas Unity Catalog; sin `.cache()`; sin MLflow
-`start_run`. Por eso los `.joblib` que sirve el backend se generan en **local** con `train_models.py` (Free
-Edition no permite descargar archivos del serverless salvo vía un Volume de UC).
+`start_run`. Por eso los `.joblib` que sirve el backend se generan en **local** (Free Edition no permite
+descargar archivos del serverless salvo vía un Volume de UC).
 
-## Apartado de Ingeniería de Datos (`ingenieria_datos/`)
+---
 
-Aplica dos técnicas del curso a los datos de Steam: **anonimización SHA-256** de estudio/distribuidora
-(`steam_anonimizar.py`) y **análisis con Spark RDD** sobre los 32.966 registros (`steam_rdd_analisis.py`, para
-Databricks; con verificación local en pandas). Ver `ingenieria_datos/README.md`.
+## Apartado de Ingeniería de Datos
+
+`ingenieria_datos/` aplica dos técnicas del curso a los datos de Steam: **anonimización SHA-256** de
+estudio/distribuidora (`steam_anonimizar.py`) y **análisis con Spark RDD** sobre los 32.966 registros
+(`steam_rdd_analisis.py`, para Databricks; con verificación local en pandas). Ver `ingenieria_datos/README.md`.
+
+---
+
+## Estructura del proyecto
+
+```text
+├── README.md                     # esta guía
+├── requirements.txt              # versiones exactas (los .joblib requieren scikit-learn 1.8.0)
+├── render.yaml                   # blueprint del despliegue en Render (plan free)
+├── scripts/                      # pipeline de datos y entrenamiento (correr desde la raíz)
+│   ├── steam_etl.py              #   ETL concurrente (Steam Storefront + SteamSpy + Reviews)
+│   ├── build_dataset.py          #   consolida los 4 CSV en el master ML-ready
+│   ├── train_models.py           #   fuente única de entrenamiento (local y Databricks)
+│   ├── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
+│   └── fix_price_outliers.py     #   repara precios de moneda regional re-consultando Steam (cc=us)
+├── app/                          # backend (Python stdlib, sin dependencias)
+│   ├── server.py                 #   http.server + router de endpoints
+│   ├── inference.py              #   carga de modelos, predict, recommend, similar, embudo
+│   └── stats.py                  #   agregados para el panel analítico
+├── web/index.html                # frontend completo (una sola página, ECharts, estética Steam)
+├── vendor/                       # tailwind.js, lucide.js, echarts.min.js (offline)
+├── docs/                         # informe del estudio + documento técnico (+ bitácora interna)
+├── models/                       # *.joblib + feature_schema.json + stage1.joblib
+├── reports/                      # metrics.json, confusion_*.json, stage1.json
+├── notebooks/                    # Databricks: 01–08 (08 = invoca train_models.py)
+├── ingenieria_datos/             # apartado del curso: anonimización SHA-256 + Spark RDD
+└── output/                       # datasets (CSV, separador ';')
+```
+
+---
 
 ## Documentación
 
-- [`docs/Documentacion del Estudio - Predictor v2.md`](docs/Documentacion%20del%20Estudio%20-%20Predictor%20v2.md) — informe metodológico y de resultados.
-- [`docs/Documento Tecnico - Predictor de Videojuegos.md`](docs/Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación original (objetivo, arquitectura, diccionario).
-- [`docs/Plan v2 - Dashboard Comercial Customizable.md`](docs/Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) — plan y bitácora de desarrollo.
+- [`docs/Documentacion del Estudio - Predictor.md`](docs/Documentacion%20del%20Estudio%20-%20Predictor.md) — informe metodológico y de resultados (incluye la guía de conceptos del dashboard).
+- [`docs/Documento Tecnico - Predictor de Videojuegos.md`](docs/Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación técnica (objetivo, arquitectura, diccionario de datos).

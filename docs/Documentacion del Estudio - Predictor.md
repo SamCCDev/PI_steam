@@ -1,8 +1,8 @@
-# Predictor de éxito comercial de videojuegos en Steam — Documentación metodológica (v2)
+# Predictor de éxito comercial de videojuegos en Steam — Documentación metodológica
 
 Documento de respaldo del estudio. Describe cómo se construyó el conjunto de datos, qué variables se
 usaron, cómo se entrenaron y compararon los modelos, y qué resultados se obtuvieron. Las cifras provienen
-de la ejecución reproducible de `build_dataset_v2.py` y `train_models.py` (replicada en Databricks por el
+de la ejecución reproducible de `build_dataset.py` y `train_models.py` (replicada en Databricks por el
 notebook `notebooks/08_train_all.py`).
 
 ---
@@ -26,7 +26,7 @@ experiencia del estudio, etc.) y obtiene la probabilidad de cada categoría seg�
 Los datos se obtienen de dos servicios públicos: la Steam Storefront API (metadatos, géneros, categorías,
 precios) y la API de SteamSpy (estimación de ventas y etiquetas de usuario). El script `steam_etl.py` los
 descarga en cuatro CSV relacionales (metadatos, etiquetas, texto y serie temporal de reseñas) y
-`build_dataset_v2.py` los consolida en un único maestro con una fila por juego.
+`build_dataset.py` los consolida en un único maestro con una fila por juego.
 
 Del catálogo descargado (32.966 juegos) se conservan **7.817** que tienen estimación de ventas en SteamSpy.
 Los restantes no es que vendan poco: SteamSpy no publica estimación para ellos, de modo que su número de
@@ -44,9 +44,9 @@ El modelo usa 92 variables: 12 numéricas, 75 binarias y 5 categóricas.
 - **Categóricas:** experiencia del estudio y de la distribuidora (Novato / Establecido / AAA según el número
   de juegos previos), soporte de control, tramo de precio y trimestre de lanzamiento.
 
-### 3.1 Ingeniería de variables (v2)
+### 3.1 Ingeniería de variables añadidas
 
-Sobre la versión inicial se agregaron variables que el equipo consideró relevantes para el negocio: el conteo
+Se agregaron variables que el equipo consideró relevantes para el negocio: el conteo
 de etiquetas y géneros, el trimestre de lanzamiento (estacionalidad), el tamaño de la distribuidora, el tramo
 de precio y la condición de acceso anticipado.
 
@@ -66,8 +66,10 @@ etapa marcada en el diccionario de datos, pero ningún modelo las consume.
 
 El entrenamiento se hace con scikit-learn. La razón es práctica: Databricks Free Edition corre en modo
 serverless (Spark Connect) y bloquea la MLlib clásica de PySpark. Como el conjunto cabe en memoria, se trae a
-pandas y se modela en el driver. El mismo código corre en local (`train_models.py`) y en Databricks (notebook
-08), lo que mantiene la reproducibilidad.
+pandas y se modela en el driver. La lógica de entrenamiento vive en un único archivo (`train_models.py`) que
+detecta dónde corre: en local lee el CSV y guarda los modelos serializados; en Databricks lee la tabla de
+Unity Catalog y guarda las métricas como tablas. El notebook 08 solo importa y ejecuta ese mismo archivo, de
+modo que el resultado es idéntico por construcción (una única fuente de verdad, sin riesgo de divergencia).
 
 El preprocesamiento es común a los tres modelos: estandarización de las numéricas, codificación one-hot de las
 categóricas y paso directo de las binarias. Todos usan `class_weight="balanced"` para compensar el desbalance.
@@ -95,7 +97,7 @@ F1-macro, exactitud y la matriz de confusión 3×3, todas sobre el conjunto de p
 |--------|:---:|:---:|:---:|
 | Regresión logística | 0,884 | 0,692 | 0,697 |
 | SVM (RBF) | 0,881 | 0,719 | 0,739 |
-| Perceptrón multicapa | **0,890** | **0,741** | **0,769** |
+| Perceptrón multicapa | **0,894** | **0,751** | **0,783** |
 
 Los tres modelos discriminan de forma parecida en AUC (alrededor de 0,88). El perceptrón obtiene la mejor
 exactitud y F1, así que es el modelo de referencia del dashboard. La regresión logística rinde algo menos pero
@@ -109,14 +111,14 @@ Filas: categoría real. Columnas: categoría predicha.
 
 | real \ predicho | Flop | Rentable | Hit |
 |---|:---:|:---:|:---:|
-| **Flop** | 299 | 119 | 11 |
-| **Rentable** | 71 | 721 | 55 |
-| **Hit** | 24 | 81 | 183 |
+| **Flop** | 290 | 125 | 14 |
+| **Rentable** | 55 | 756 | 36 |
+| **Hit** | 18 | 92 | 178 |
 
-La sensibilidad por categoría es 70 % en Flop (299/429), 85 % en Rentable (721/847) y 64 % en Hit (183/288).
+La sensibilidad por categoría es 68 % en Flop (290/429), 89 % en Rentable (756/847) y 62 % en Hit (178/288).
 Casi toda la confusión ocurre entre categorías vecinas: un Flop se confunde con Rentable mucho más que con Hit,
 y lo mismo pasa entre Hit y Rentable. Eso es razonable porque la variable es ordinal; el modelo rara vez salta
-de un extremo al otro (solo 11 Flop reales fueron predichos como Hit, y 24 Hit como Flop). La categoría Hit es
+de un extremo al otro (solo 14 Flop reales fueron predichos como Hit, y 18 Hit como Flop). La categoría Hit es
 la más difícil, lo que concuerda con que es la minoritaria y la que depende de factores externos al juego
 (marketing, comunidad, momento de mercado) que el modelo no observa.
 
@@ -180,9 +182,9 @@ La reparación fue quirúrgica: un script (`scripts/fix_price_outliers.py`) re-c
 appids contra la Steam Storefront API forzando la región estadounidense (`cc=us`) y reescribió el precio en
 la tabla de metadatos, conservando un respaldo del archivo original. Los precios altos legítimos —software
 como RPG Maker o juegos cuyo precio elevado es deliberado, como "This Game Costs 200 Dollars"— se mantuvieron
-intactos. Tras la corrección se regeneró el dataset completo y se reentrenaron los cinco modelos; el
-perceptrón mejoró ligeramente (AUC de 0,888 a 0,890 y sensibilidad de Hit de 60 % a 64 %), señal de que el
-ruido de precios estaba degradando una de las variables con mayor peso.
+intactos. Tras la corrección se regeneró el dataset completo y se reentrenaron los modelos; el perceptrón
+mejoró (AUC hasta 0,894 y sensibilidad de Hit hasta 62 %), señal de que el ruido de precios estaba
+degradando una de las variables con mayor peso.
 
 Quedan dos lecciones para la sección de limitaciones. Primero, el precio de un catálogo internacional debe
 extraerse fijando explícitamente la región desde el inicio del ETL. Segundo, una validación temprana con
@@ -204,8 +206,9 @@ Steam (carpeta `ingenieria_datos/`).
   En este estudio se usa solo de forma agregada para describir el conjunto; explotar su dimensión temporal
   queda como línea futura (sección 9).
 
-El entrenamiento es reproducible en dos entornos: en local con `train_models.py` y en Databricks con el
-notebook 08, que deja las métricas y los coeficientes como tablas de Unity Catalog.
+El entrenamiento es reproducible en dos entornos a partir del mismo `train_models.py`: en local genera los
+modelos serializados que sirve el backend; en Databricks (donde el notebook 08 solo lo invoca) deja las
+métricas y los coeficientes como tablas de Unity Catalog.
 
 ## 7. Producto
 
