@@ -27,23 +27,6 @@
     "f1_macro": 0.7413,
     "accuracy": 0.7692
   },
-  "post": {
-    "lr": {
-      "auc_ovr_macro": 0.9029,
-      "f1_macro": 0.726,
-      "accuracy": 0.7321
-    },
-    "svm": {
-      "auc_ovr_macro": 0.8913,
-      "f1_macro": 0.7382,
-      "accuracy": 0.7519
-    },
-    "mlp": {
-      "auc_ovr_macro": 0.9051,
-      "f1_macro": 0.7558,
-      "accuracy": 0.7852
-    }
-  },
   "owners_regressor": {
     "r2_log": 0.6273,
     "mae_owners": 470020

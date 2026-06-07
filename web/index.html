@@ -543,6 +543,14 @@ select:focus{border-color:var(--accent-dim)}
 </style>
 </head>
 <body class="pres">
+<!-- Overlay de arranque: bloquea la UI hasta que el backend responde con el modelo real.
+     Sin modo offline: si el backend no está, se reintenta (útil con el arranque frío de Render). -->
+<div id="boot" style="position:fixed;inset:0;z-index:999;background:#0b121b;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px">
+  <div style="width:46px;height:46px;border-radius:50%;border:3px solid #2a475e;border-top-color:#66c0f4;animation:bootspin 0.9s linear infinite"></div>
+  <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;color:#c7d5e0">STEAM<span style="color:#66c0f4">PREDICT</span></div>
+  <div id="bootMsg" style="font-size:13px;color:#8f98a0;max-width:340px;text-align:center;line-height:1.5">Conectando con el modelo…</div>
+  <style>@keyframes bootspin{to{transform:rotate(360deg)}}</style>
+</div>
 
 <div class="app">
   <!-- ======================= HEADER ======================= -->
@@ -1010,7 +1018,7 @@ function stateToFeatures(st){
 }
 /** apiPredict(state) → mismo shape que predict(): {modelos,consenso,owners,ingreso,incertidumbre,explicacion} */
 async function apiPredict(st){
-  const resp=await API.post('/api/predict',{features:stateToFeatures(st),mode:'pre'});
+  const resp=await API.post('/api/predict',{features:stateToFeatures(st)});
   const cons={};CLASSES.forEach(c=>cons[c]=(resp.modelos.lr.probs[c]+resp.modelos.svm.probs[c]+resp.modelos.mlp.probs[c])/3);
   const price=st.numeric.price||0, owners=resp.owners_estimados;
   const ingreso=Math.round(owners*(price<=0?0:price)*0.16*0.65);
@@ -1228,7 +1236,8 @@ const COMMANDS={
   },
   ir(a){ COMMANDS.view(a); },
   predict(){
-    const r=LAST||predict(state), p=r.consenso.probs;
+    const r=LAST; if(!r){ termPrint('sin predicción todavía — espera a que cargue el modelo','warn'); return; }
+    const p=r.consenso.probs;
     termPrint(`clase: <b>${r.consenso.clase}</b>  ·  Flop <b>${pct(p.Flop)}%</b> · Rentable <b>${pct(p.Rentable)}%</b> · Hit <b>${pct(p.Hit)}%</b>`);
     termPrint(`owners est. <b>${ownersFmt(r.owners)}</b> · ingreso <b>$${nf(r.ingreso)}</b> · incertidumbre <span class="${r.incertidumbre.nivel==='baja'?'ok':'warn'}">${r.incertidumbre.nivel}</span>`,'dim');
   },
@@ -1267,25 +1276,15 @@ const COMMANDS={
   },
   async find(...a){
     const q=a.join(' ').toLowerCase(); if(!q){ termPrint('uso: find &lt;juego&gt;','warn'); return; }
-    // Busca en el backend (mismos juegos reales que el buscador del header); el
-    // catálogo local solo queda como respaldo si el backend está caído.
-    let juegos=null;
-    try{ juegos=(await API.get('/api/games?q='+encodeURIComponent(q))).juegos||[]; }catch(e){}
-    if(juegos){
-      if(!juegos.length){ termPrint(`sin coincidencias para <b>${q}</b>`,'warn'); return; }
-      const g=juegos[0];
-      termPrint(`<span class="ok">✓</span> cargando <b>${g.name}</b> · ${g.clase} · ${ownersFmt(g.owners)} owners (real)`);
-      if(juegos.length>1) termPrint(`(${juegos.length-1} más: ${juegos.slice(1,4).map(h=>h.name).join(', ')})`,'dim');
-      await loadRealGame(g.appid, g.name);
-      return;
-    }
-    const hits=CATALOG.filter(gm=>gm.name.toLowerCase().includes(q)||gm.developer.toLowerCase().includes(q));
-    if(!hits.length){ termPrint(`sin coincidencias para <b>${q}</b>`,'warn'); return; }
-    const gm=hits[0];
-    state.numeric.price=Math.min(gm.price,MOCK_CONFIG.numeric.price.max);
-    buildInputs(); doRecompute();
-    if(activeView!=='sim') showView('sim');
-    termPrint(`<span class="ok">✓</span> cargado <b>${gm.name}</b> ($${gm.price}) · ${gm.clase} · ${ownersFmt(gm.owners)} owners <span class="dim">(catálogo local)</span>`);
+    // Busca en el backend (mismos juegos reales que el buscador del header).
+    let juegos;
+    try{ juegos=(await API.get('/api/games?q='+encodeURIComponent(q))).juegos||[]; }
+    catch(e){ termPrint('búsqueda no disponible — backend sin conexión','warn'); return; }
+    if(!juegos.length){ termPrint(`sin coincidencias para <b>${q}</b>`,'warn'); return; }
+    const g=juegos[0];
+    termPrint(`<span class="ok">✓</span> cargando <b>${g.name}</b> · ${g.clase} · ${ownersFmt(g.owners)} owners (real)`);
+    if(juegos.length>1) termPrint(`(${juegos.length-1} más: ${juegos.slice(1,4).map(h=>h.name).join(', ')})`,'dim');
+    await loadRealGame(g.appid, g.name);
   },
   buscar(...a){ COMMANDS.find(...a); },
   metrics(){
@@ -1294,15 +1293,19 @@ const COMMANDS={
   },
   metricas(){ COMMANDS.metrics(); },
   models(){
-    const r=LAST||predict(state);
+    const r=LAST; if(!r){ termPrint('sin predicción todavía — espera a que cargue el modelo','warn'); return; }
     ['lr','svm','mlp'].forEach(k=>{ const p=r.modelos[k].probs;
       termPrint(`<b>${MODEL_LABEL[k]}</b> → ${r.modelos[k].clase}  <span class="dim">(F ${pct(p.Flop)} · R ${pct(p.Rentable)} · H ${pct(p.Hit)})</span>`); });
   },
   modelos(){ COMMANDS.models(); },
-  recommend(){
-    const R=recommend();
+  async recommend(){
+    let R;
+    try{
+      const resp=await API.post('/api/recommend',{features:stateToFeatures(state),K:3,model:'mlp'});
+      R={phit_antes:resp.phit_antes,phit_despues:resp.phit_despues,delta:resp.delta,cambios:resp.cambios};
+    }catch(e){ termPrint('recomendaciones no disponibles — backend sin conexión','warn'); return; }
     termPrint(`P(Hit) ${pct(R.phit_antes)}% → <b class="ok">${pct(R.phit_despues)}%</b> (+${pct(R.delta)} pts)`);
-    R.cambios.slice(1).forEach((c,i)=>termPrint(`  ${i+1}. ${c.desc}`,'dim'));
+    R.cambios.forEach((c,i)=>termPrint(`  ${i+1}. ${c.desc}`,'dim'));
   },
   recomendar(){ COMMANDS.recommend(); },
   echo(...a){ termPrint(a.join(' ').replace(/</g,'&lt;')||'&nbsp;'); },
@@ -1486,7 +1489,7 @@ function recompute(){ clearTimeout(rcTimer); rcTimer=setTimeout(doRecompute,90);
 async function doRecompute(){
   let r;
   try{ r=await apiPredict(state); }
-  catch(e){ log('warn','backend no disponible — modelo local de respaldo'); r=predict(state); }
+  catch(e){ log('warn','backend no disponible — se mantiene la última predicción; reintenta en unos segundos'); return; }
   LAST=r;
   renderSimResults(r);
   if(activeView==='sim') renderCompare();
@@ -1768,7 +1771,7 @@ function renderAnalytic(){
  * + tabla de métricas AUC/F1/Accuracy por modelo (MOCK_STATS.metrics ← /api/metrics).
  */
 function renderCompare(){
-  const r=LAST||predict(state); const models=['lr','svm','mlp'];
+  const r=LAST; if(!r) return; const models=['lr','svm','mlp'];
   $('#cmpLegend').innerHTML=CLASSES.map(c=>`<span class="it"><span class="sw" style="background:${CLASS_COLOR[c]}"></span>${c}</span>`).join('');
   $('#cmpFeat').textContent=MOCK_STATS.metrics._meta.features+' features';
   getChart('cmpBars').setOption({grid:{top:30,left:42,right:16,bottom:30},tooltip:Object.assign({trigger:'axis',axisPointer:{type:'shadow'},valueFormatter:v=>(v*100).toFixed(1)+'%'},TT),
@@ -1857,7 +1860,7 @@ async function renderRecommend(){
     R={modelo:resp.modelo,phit_antes:resp.phit_antes,phit_despues:resp.phit_despues,delta:resp.delta,
        cambios:[{desc:'Configuración actual',phit:resp.phit_antes},...resp.cambios],
        cambios_individuales:resp.cambios_individuales};
-  }catch(e){ R=recommend(); }
+  }catch(e){ log('warn','recomendaciones no disponibles — backend sin conexión'); return; }
   $('#recModel').textContent=MODEL_LABEL[R.modelo]||R.modelo;
   $('#recCmp').innerHTML=`
     <div class="rec-big"><div class="n" style="color:var(--muted)">${pct(R.phit_antes)}%</div><div class="l">P(Hit) antes</div></div>
@@ -1947,22 +1950,35 @@ $('#btnSimular').addEventListener('click',()=>{
 (async function init(){
   buildInputs();
   log('sys','SteamPredict iniciado · conectando con el backend…');
-  try{
-    const s=await API.get('/api/stats');
-    MOCK_STATS.market=s.market; MOCK_STATS.price_hist=s.price_hist; MOCK_STATS.owners_by_genre=s.owners_by_genre;
-    MOCK_STATS.importance=s.lr_importance; MOCK_STATS.metrics=s.metrics; MOCK_STATS.confusion=s.confusion;
-    MOCK_STATS.scatter=s.scatter; MOCK_STATS.hit_by_quarter=s.hit_by_quarter; MOCK_STATS.n_total=s.n_total;
-    MOCK_STATS.pipeline=s.pipeline||{};
-    // N del header = catálogo completo recolectado; el subtítulo desglosa el embudo de datos
-    const pl=MOCK_STATS.pipeline, nCat=pl.n_catalogo||s.n_total, nMeta=pl.n_metadata, nTrain=pl.n_train||s.n_total;
-    const ngEl=document.getElementById('nGames'); if(ngEl) ngEl.textContent=nf(nCat);
-    const subEl=document.getElementById('anSub');
-    if(subEl) subEl.textContent=`Radiografía del dataset · ${nf(nCat)} juegos recolectados`+
-      (nMeta?` · ${nf(nMeta)} con metadata completa (embudo)`:'')+` · ${nf(nTrain)} con ventas estimables (entrenamiento).`;
-    log('ok',`backend conectado · catálogo ${nf(nCat)} → metadata ${nMeta?nf(nMeta):'?'} → entrenables ${nf(nTrain)} · ${s.metrics._meta.features} features`);
-  }catch(e){ log('warn','backend offline — datos de ejemplo (corre: python app/server.py)'); }
+  // Sin modo offline: la UI espera al backend real. Si no responde (p. ej. arranque frío
+  // de Render, ~30-60s), se reintenta cada 3s mostrando el progreso en el overlay #boot.
+  const bootMsg=document.getElementById('bootMsg');
+  for(let intento=1;;intento++){
+    try{
+      const s=await API.get('/api/stats');
+      MOCK_STATS.market=s.market; MOCK_STATS.price_hist=s.price_hist; MOCK_STATS.owners_by_genre=s.owners_by_genre;
+      MOCK_STATS.importance=s.lr_importance; MOCK_STATS.metrics=s.metrics; MOCK_STATS.confusion=s.confusion;
+      MOCK_STATS.scatter=s.scatter; MOCK_STATS.hit_by_quarter=s.hit_by_quarter; MOCK_STATS.n_total=s.n_total;
+      MOCK_STATS.pipeline=s.pipeline||{};
+      // N del header = catálogo completo recolectado; el subtítulo desglosa el embudo de datos
+      const pl=MOCK_STATS.pipeline, nCat=pl.n_catalogo||s.n_total, nMeta=pl.n_metadata, nTrain=pl.n_train||s.n_total;
+      const ngEl=document.getElementById('nGames'); if(ngEl) ngEl.textContent=nf(nCat);
+      const subEl=document.getElementById('anSub');
+      if(subEl) subEl.textContent=`Radiografía del dataset · ${nf(nCat)} juegos recolectados`+
+        (nMeta?` · ${nf(nMeta)} con metadata completa (embudo)`:'')+` · ${nf(nTrain)} con ventas estimables (entrenamiento).`;
+      log('ok',`backend conectado · catálogo ${nf(nCat)} → metadata ${nMeta?nf(nMeta):'?'} → entrenables ${nf(nTrain)} · ${s.metrics._meta.features} features`);
+      break;
+    }catch(e){
+      if(bootMsg) bootMsg.textContent=intento<3
+        ?`Conectando con el modelo… (intento ${intento})`
+        :`Despertando el servidor — el plan gratuito puede tardar ~1 minuto la primera vez (intento ${intento})…`;
+      await new Promise(r=>setTimeout(r,3000));
+    }
+  }
+  if(bootMsg) bootMsg.textContent='Cargando el modelo y la primera predicción…';
   await doRecompute();
   showView('an');
+  document.getElementById('boot')?.remove();
   setTimeout(()=>log('ok','panel analítico renderizado · 7 gráficos'),200);
 })();
 </script>

@@ -40,19 +40,6 @@ MODELS = {name: joblib.load(MODELS_DIR / f"{name}.joblib") for name in SCHEMA["m
 OWNERS_REG = joblib.load(MODELS_DIR / "owners_regressor.joblib")
 SIMILAR = joblib.load(MODELS_DIR / "similar.joblib")
 
-# ── Modelos post-lanzamiento (señales tempranas de recepción) ─────────────
-POST_EXTRA = SCHEMA.get("post_extra", [])
-POST_FEAT_COLS = SCHEMA.get("post_feat_cols", [])
-POST_NUMERIC = SCHEMA.get("post_numeric", {})
-POST_MODELS = {}
-for _n in SCHEMA["models"]:
-    _p = MODELS_DIR / f"post_{_n}.joblib"
-    if _p.exists():
-        POST_MODELS[_n] = joblib.load(_p)
-POST_LABELS = {"ccu": "Jugadores concurrentes (pico)", "rating_porcentaje": "% reseñas positivas",
-               "metacritic_score": "Nota Metacritic", "ts_positive_ratio": "Proporción positiva",
-               "ts_avg_playtime_hrs": "Horas jugadas (prom.)", "ts_months_active": "Meses activo"}
-
 # ── Etapa 1 del embudo: modelo de TRACCIÓN (¿el juego logra ventas estimables?) ──
 # Entrenado sobre juegos con METADATA COMPLETA (train_stage1.py) para eliminar el sesgo de
 # recolección (catálogo vs SteamSpy). Devuelve P(tracción); el simulador la combina con la
@@ -160,18 +147,6 @@ def _row(state: dict) -> pd.DataFrame:
     return pd.DataFrame([{c: state.get(c, 0) for c in FEAT_COLS}])[FEAT_COLS]
 
 
-def _post_state(features: dict) -> dict:
-    """Estado pre-lanzamiento + las señales tempranas de recepción (default = mediana)."""
-    s = normalize_state(features)
-    for c in POST_EXTRA:
-        s[c] = features.get(c, POST_NUMERIC.get(c, {}).get("median", 0))
-    return s
-
-
-def _post_row(state: dict) -> pd.DataFrame:
-    return pd.DataFrame([{c: state.get(c, 0) for c in POST_FEAT_COLS}])[POST_FEAT_COLS]
-
-
 def _probs(state: dict, model: str) -> np.ndarray:
     return MODELS[model].predict_proba(_row(state))[0]
 
@@ -205,13 +180,9 @@ def _explain(state: dict, model: str, target_idx: int = HIT_IDX, top: int = 6) -
 
 
 # ── API: predicción multi-modelo + incertidumbre ──────────────────────────
-def predict(features: dict, model: str = "todos", mode: str = "pre") -> dict:
+def predict(features: dict, model: str = "todos") -> dict:
     pre_state = normalize_state(features)
-    use_post = mode == "post" and bool(POST_MODELS)
-    if use_post:
-        mdl, row = POST_MODELS, _post_row(_post_state(features))
-    else:
-        mdl, row = MODELS, _row(pre_state)
+    mdl, row = MODELS, _row(pre_state)
 
     out, argmax_classes = {}, []
     for name in mdl:
@@ -255,7 +226,6 @@ def predict(features: dict, model: str = "todos", mode: str = "pre") -> dict:
                   "Hit": round(p_vende * rp["Hit"], 4)}
 
     return {
-        "modo": "post" if use_post else "pre",
         "modelos": out,
         "owners_estimados": owners_est,
         "clase_por_owners": _class_from_owners(owners_est),
@@ -418,10 +388,4 @@ def get_config() -> dict:
         "categorical": SCHEMA["categorical"],
         "groups": groups,
         "dev_prior_global": SCHEMA.get("dev_prior_global"),
-        "post": {
-            "enabled": bool(POST_MODELS),
-            "extra": POST_EXTRA,
-            "numeric": {c: {**POST_NUMERIC.get(c, {}), "label": POST_LABELS.get(c, c)}
-                        for c in POST_EXTRA},
-        },
     }

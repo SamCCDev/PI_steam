@@ -1,44 +1,76 @@
 # Predictor de Éxito Comercial de Videojuegos en Steam
 
 Sistema de Machine Learning que estima, **antes del lanzamiento**, en qué categoría comercial caerá un
-videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hit** (≥1M). Incluye un ETL de
-datos de Steam/SteamSpy, un pipeline de entrenamiento reproducible y un **dashboard interactivo con backend
-local** (estética Steam) que compara tres modelos, explica sus predicciones y recomienda mejoras.
+videojuego de PC: **Flop** (<200k propietarios), **Rentable** (200k–1M) o **Hit** (≥1M). El alcance del
+estudio es exclusivamente **pre-lanzamiento**: todos los modelos usan solo variables conocibles antes de
+publicar el juego (precio, géneros, tags, idiomas, experiencia del estudio…), nunca reseñas ni métricas
+posteriores a la venta.
 
 > **Demo en línea:** <https://steampredict.onrender.com> — corre en el plan free de Render: si nadie
 > lo visitó en los últimos 15 minutos, el primer acceso tarda ~30-60 s en despertar el servicio.
->
-> Documentación del proyecto:
-> - [`docs/Documento Tecnico - Predictor de Videojuegos.md`](docs/Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación original (objetivo, arquitectura, diccionario).
-> - [`docs/Plan v2 - Dashboard Comercial Customizable.md`](docs/Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) — plan y bitácora de desarrollo.
-> - [`docs/Documentacion del Estudio - Predictor v2.md`](docs/Documentacion%20del%20Estudio%20-%20Predictor%20v2.md) — informe metodológico y de resultados.
 
 ---
 
-## Inicio rápido (dashboard v2)
+## Inicio rápido (local)
 
-Requiere Python con `scikit-learn`, `pandas`, `numpy`, `joblib` (ya usados para entrenar). El backend usa solo
-la librería estándar, **no necesita instalar nada extra**.
+Requiere Python con las dependencias de `requirements.txt` (versiones exactas: los `.joblib` del repo se
+serializaron con scikit-learn 1.8.0). El backend usa solo la librería estándar.
 
 ```bash
 git clone https://github.com/SamCCDev/PI_steam.git
 cd PI_steam
+pip install -r requirements.txt
 python app/server.py
 ```
 
 Abre **http://127.0.0.1:8000**. Los modelos entrenados (`models/*.joblib`) ya vienen en el repo, así que el
-dashboard funciona sin reentrenar y **sin conexión a internet**.
+dashboard funciona sin reentrenar.
 
-El dashboard tiene 5 vistas: **Simulador** (embudo de 2 etapas + predicción + incertidumbre), **Comparar
-modelos** (LR/SVM/MLP lado a lado), **Juegos del mismo camino** (vecinos reales), **Recomendaciones** (mejor
-paquete de cambios para subir P(Hit)) y **Panel analítico** (7 gráficos del mercado con datos vivos del
-backend, que además **reaccionan a la simulación**: marcan tu rango de precio, tus géneros, tu trimestre y
-ubican "Tu juego" en el scatter precio/owners). Cada gráfica y tarjeta lleva un icono **?** con la
-explicación de qué muestra y cómo leerla.
+## El dashboard
+
+Cinco vistas con estética Steam:
+
+| Vista | Qué hace |
+|---|---|
+| **Simulador** | Configura un juego hipotético → embudo de 2 etapas, probabilidades por clase, owners estimados, incertidumbre |
+| **Comparar modelos** | LR / SVM / MLP lado a lado sobre la misma configuración + métricas de evaluación |
+| **Mismo camino** | Juegos reales con perfil de features cercano al tuyo (vecinos más próximos) |
+| **Recomendaciones** | Mejor paquete de cambios accionables para subir P(Hit) (búsqueda voraz) |
+| **Panel analítico** | 7 gráficos del mercado con datos vivos del backend, **reactivos a la simulación**: marcan tu rango de precio, tus géneros, tu trimestre y ubican "Tu juego" en el scatter precio/owners |
+
+Cada gráfica y tarjeta lleva un icono **?** con la explicación de qué muestra y cómo leerla. También hay un
+buscador de juegos reales (modo validación: predicción vs resultado real) y una terminal con comandos
+(`help`, `set`, `find`, `predict`…).
 
 ---
 
-## Flujo de datos (de extremo a extremo)
+## Modelos y resultados
+
+Tres clasificadores con el mismo preprocesamiento (estandarización + one-hot + paso directo de binarias,
+`class_weight="balanced"`), más una regresión de owners que habilita umbrales ajustables.
+
+| Modelo | AUC (OVR-macro) | F1 (macro) | Accuracy |
+| :--- | :---: | :---: | :---: |
+| Regresión Logística | 0.884 | 0.692 | 0.697 |
+| SVM (RBF) | 0.881 | 0.719 | 0.739 |
+| **MLP (ReLU)** | **0.890** | **0.741** | **0.769** |
+
+Medido en test (split 80/20 estratificado sobre 7.817 juegos con `owners>0`). Balance de clases
+27% Flop / 54% Rentable / 18% Hit. El MLP es el modelo de referencia del dashboard; la LR se conserva por
+interpretabilidad. Detalle y matrices de confusión en la documentación del estudio.
+
+### Embudo de dos etapas
+
+El simulador combina dos modelos: **Etapa 1** estima P(el juego logra tracción comercial) sobre 17.565 juegos
+con metadata completa (AUC 0.90), y **Etapa 2** predice Flop/Rentable/Hit condicionado a esa tracción. El
+resultado son cuatro probabilidades (sin tracción / Flop / Rentable / Hit). Entrenar la etapa 1 sobre datos sin
+filtrar daba un AUC engañoso (0.96) por un sesgo de recolección; el detalle está en la documentación (§5.5).
+
+---
+
+## Datos
+
+### Flujo de extremo a extremo
 
 ```
 1. ETL          scripts/steam_etl.py        → output/*.csv          (4 tablas crudas de Steam/SteamSpy)
@@ -49,7 +81,27 @@ explicación de qué muestra y cómo leerla.
 5. Frontend     web/index.html              → consume /api/* y dibuja las 5 vistas
 ```
 
-El mismo entrenamiento corre en **Databricks** (`notebooks/08_train_all.py`) para la parte de escala/académica.
+Embudo de datos: **32.966** juegos recolectados → **17.565** con metadata completa (universo de la etapa 1)
+→ **7.817** con ventas estimables por SteamSpy (entrenamiento del clasificador).
+
+### Variables y prevención de fuga de datos
+
+El conjunto tiene **92 features** (12 numéricas, 75 binarias, 5 categóricas). El predictor es **pre-lanzamiento**,
+así que se **excluyen** del modelado las variables que solo se conocen tras lanzar: reseñas
+(`positive`/`negative`), valoración, Metacritic, jugadores concurrentes (`ccu`) y los agregados `ts_*`. El
+diccionario `output/dataset_ml_dictionary.csv` marca el rol y la `etapa` de cada columna.
+
+Features propias de la v2: conteos de catálogo (`num_tags`, `num_genres`, `num_categories`), `release_quarter`,
+`pub_experience`/`pub_game_count`, `price_tier`, `is_early_access` y `dev_success_prior` (prior bayesiano por
+estudio calculado *leave-one-out* para no filtrar la propia etiqueta).
+
+### Calidad de datos: precios de moneda regional
+
+El scrape original capturó 46 precios en moneda regional o de otra edición (Cyberpunk 2077 a $199,
+Red Dead Redemption 2 a $53.990). `scripts/fix_price_outliers.py` los re-consulta contra la Steam
+Storefront API forzando región US (`cc=us`) y reescribe `games_metadata.csv` (con respaldo `.bak`);
+los precios altos legítimos (RPG Maker, juegos de precio-broma a $200) se conservan. Tras la
+reparación se regeneró el dataset y se reentrenaron los modelos.
 
 ---
 
@@ -79,8 +131,6 @@ El mismo entrenamiento corre en **Databricks** (`notebooks/08_train_all.py`) par
 └── output/                       # datasets (CSV, separador ';')
 ```
 
----
-
 ## Reproducir el pipeline
 
 ```bash
@@ -94,48 +144,18 @@ python app/server.py                                          # levantar el dash
 `build_dataset_v2.py` es *schema-driven* (detecta tags/géneros por prefijo y descarta columnas
 casi-constantes) e idempotente: re-ejecutar tras actualizar los CSV regenera todo.
 
-### Variables y prevención de fuga de datos
+### ETL — uso de `steam_etl.py`
 
-El conjunto tiene **92 features** (12 numéricas, 75 binarias, 5 categóricas). El predictor es **pre-lanzamiento**,
-así que se **excluyen** las variables que solo se conocen tras lanzar: reseñas (`positive`/`negative`),
-valoración, Metacritic, jugadores concurrentes (`ccu`) y los agregados `ts_*`. El diccionario
-`output/dataset_ml_dictionary.csv` marca el rol y la `etapa` (pre/post/meta) de cada columna.
+Motor de extracción concurrente (multihilo + limitador de tasa para evitar HTTP 429).
 
-Features nuevas de la v2: conteos de catálogo (`num_tags`, `num_genres`, `num_categories`), `release_quarter`,
-`pub_experience`/`pub_game_count`, `price_tier`, `is_early_access` y `dev_success_prior` (prior bayesiano por
-estudio calculado *leave-one-out* para no filtrar la propia etiqueta).
+```bash
+python scripts/steam_etl.py                       # extracción estándar
+python scripts/steam_etl.py --sample 2000 --source steamspy   # juegos con ventas reales (SteamSpy)
+python scripts/steam_etl.py --validate 730        # diagnóstico de un appid sin escribir archivos
+```
 
----
-
-## Modelos y resultados
-
-Tres clasificadores con el mismo preprocesamiento (estandarización + one-hot + paso directo de binarias,
-`class_weight="balanced"`), más una regresión de owners que habilita umbrales ajustables.
-
-| Modelo | AUC (OVR-macro) | F1 (macro) | Accuracy |
-| :--- | :---: | :---: | :---: |
-| Regresión Logística | 0.884 | 0.692 | 0.697 |
-| SVM (RBF) | 0.881 | 0.719 | 0.739 |
-| **MLP (ReLU)** | **0.890** | **0.741** | **0.769** |
-
-Medido en test (split 80/20 estratificado sobre 7.817 juegos con `owners>0`). Balance de clases
-27% Flop / 54% Rentable / 18% Hit. El MLP es el modelo de referencia del dashboard; la LR se conserva por
-interpretabilidad. Detalle y matrices de confusión en la documentación del estudio.
-
-### Calidad de datos: precios de moneda regional
-
-El scrape original capturó 46 precios en moneda regional o de otra edición (Cyberpunk 2077 a $199,
-Red Dead Redemption 2 a $53.990). `scripts/fix_price_outliers.py` los re-consulta contra la Steam
-Storefront API forzando región US (`cc=us`) y reescribe `games_metadata.csv` (con respaldo `.bak`);
-los precios altos legítimos (RPG Maker, juegos de precio-broma a $200) se conservan. Tras la
-reparación se regeneró el dataset y se reentrenaron los 5 modelos.
-
-### Embudo de dos etapas
-
-El simulador combina dos modelos: **Etapa 1** estima P(el juego logra tracción comercial) sobre 17.565 juegos
-con metadata completa (AUC 0.89), y **Etapa 2** predice Flop/Rentable/Hit condicionado a esa tracción. El
-resultado son cuatro probabilidades (sin tracción / Flop / Rentable / Hit). Entrenar la etapa 1 sobre datos sin
-filtrar daba un AUC engañoso (0.96) por un sesgo de recolección; el detalle está en la documentación (§5.6).
+Produce 4 CSV relacionales en `output/` (separador `;`): `games_metadata`, `games_tags`, `games_text`,
+`games_timeseries`. Configura tu `STEAM_API_KEY` en un `.env` (ver `.env.example`) para consultas ampliadas.
 
 ---
 
@@ -155,25 +175,14 @@ Catalog, entrena LR (con `GridSearchCV`), SVM-RBF y MLP, y guarda métricas y co
 `start_run`. Por eso los `.joblib` que sirve el backend se generan en **local** con `train_models.py` (Free
 Edition no permite descargar archivos del serverless salvo vía un Volume de UC).
 
----
-
 ## Apartado de Ingeniería de Datos (`ingenieria_datos/`)
 
 Aplica dos técnicas del curso a los datos de Steam: **anonimización SHA-256** de estudio/distribuidora
 (`steam_anonimizar.py`) y **análisis con Spark RDD** sobre los 32.966 registros (`steam_rdd_analisis.py`, para
 Databricks; con verificación local en pandas). Ver `ingenieria_datos/README.md`.
 
----
+## Documentación
 
-## ETL — uso de `steam_etl.py`
-
-Motor de extracción concurrente (multihilo + limitador de tasa para evitar HTTP 429).
-
-```bash
-python scripts/steam_etl.py                       # extracción estándar
-python scripts/steam_etl.py --sample 2000 --source steamspy   # juegos con ventas reales (SteamSpy)
-python scripts/steam_etl.py --validate 730        # diagnóstico de un appid sin escribir archivos
-```
-
-Produce 4 CSV relacionales en `output/` (separador `;`): `games_metadata`, `games_tags`, `games_text`,
-`games_timeseries`. Configura tu `STEAM_API_KEY` en un `.env` (ver `.env.example`) para consultas ampliadas.
+- [`docs/Documentacion del Estudio - Predictor v2.md`](docs/Documentacion%20del%20Estudio%20-%20Predictor%20v2.md) — informe metodológico y de resultados.
+- [`docs/Documento Tecnico - Predictor de Videojuegos.md`](docs/Documento%20Tecnico%20-%20Predictor%20de%20Videojuegos.md) — especificación original (objetivo, arquitectura, diccionario).
+- [`docs/Plan v2 - Dashboard Comercial Customizable.md`](docs/Plan%20v2%20-%20Dashboard%20Comercial%20Customizable.md) — plan y bitácora de desarrollo.

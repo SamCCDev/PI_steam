@@ -37,3 +37,5 @@ ingenieria_datos/output/
 # Dataset del experimento de 2 etapas (regenerable con train_stage1.py)
 output/dataset_stage1.csv
 output/*.bak
+VIDEO_GAMES_v/
+VIDEO_GAMES_v.docx

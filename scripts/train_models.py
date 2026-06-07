@@ -126,26 +126,6 @@ def main():
         pipe_full.fit(X, y)
         joblib.dump(pipe_full, MODELS_DIR / f"{name}.joblib")
 
-    # ── Modelos POST-lanzamiento (mismas features + señales tempranas de recepción) ─
-    # No usan volumen crudo de reseñas (sería proxy de owners); sí recepción/engagement.
-    POST_EXTRA = [c for c in ["ccu", "rating_porcentaje", "metacritic_score",
-                              "ts_positive_ratio", "ts_avg_playtime_hrs", "ts_months_active"]
-                  if c in df.columns]
-    num_post = num_feats + POST_EXTRA
-    Xp = df[num_post + bool_feats + cat_feats].copy()
-    Xp_tr, Xp_te = Xp.loc[X_tr.index], Xp.loc[X_te.index]
-    print(f"\n[post] señales tempranas: {POST_EXTRA}")
-    metrics["post"] = {}
-    for name, clf in classifiers.items():
-        pipe = Pipeline([("pre", make_preprocessor(num_post, bool_feats, cat_feats)), ("clf", clone(clf))])
-        pipe.fit(Xp_tr, y_tr)
-        m = clf_metrics(pipe, Xp_te, y_te)
-        metrics["post"][name] = {k: v for k, v in m.items() if k != "confusion"}
-        print(f"    post-{name}: AUC={m['auc_ovr_macro']}  F1={m['f1_macro']}  acc={m['accuracy']}")
-        pf = Pipeline([("pre", make_preprocessor(num_post, bool_feats, cat_feats)), ("clf", clone(clf))])
-        pf.fit(Xp, y)
-        joblib.dump(pf, MODELS_DIR / f"post_{name}.joblib")
-
     # ── Regresión de owners (log) -> habilita umbrales ajustables ──────────
     print("\n[owners_regressor] entrenando...")
     y_owners = np.log1p(df["owners_lower_bound"].astype(float))
@@ -190,10 +170,6 @@ def main():
         "dev_prior_global": dev_prior_global,
         "feat_cols": feat_cols,
         "models": ["lr", "svm", "mlp"],
-        "post_extra": POST_EXTRA,
-        "post_feat_cols": num_post + bool_feats + cat_feats,
-        "post_numeric": {c: {"median": float(df[c].median()), "min": float(df[c].min()),
-                             "max": float(df[c].max())} for c in POST_EXTRA},
     }
     (MODELS_DIR / "feature_schema.json").write_text(
         json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -28,7 +28,7 @@ mismo camino**, y explora un **panel analítico tipo Power BI**. Todo reproducib
 | 1 | Selección de datos | Objetivo ~7k con `owners>0` + extra con ≥1 review (incluye gratuitos/demos) para mayor aleatoriedad. Descarga de ~2k en curso. |
 | 2 | Umbrales Flop/Rentable/Hit | Se mantienen fijos (200k / 1M). **Ajustables** vía slider gracias a un modelo de regresión de owners (ver §4.4). |
 | 3 | Features nuevas | `num_tags` (≥15 tags considerados), idiomas soportados, tamaño de estudio (dev + publisher), y otras (ver §3.1). |
-| 4 | Post-lanzamiento | Sí — track separado que usa señales tempranas (reviews/rating/ccu). |
+| 4 | Alcance | Pre-lanzamiento únicamente: solo variables conocibles antes de publicar. |
 | 5 | "Customizable" | (a) ajustar inputs del juego **y** (b) elegir/comparar modelos. |
 | 6 | Comparación de modelos | Predicciones distintas lado a lado (no un solo "mejor"). |
 | 7 | Incertidumbre | Sí — se muestra explícitamente (ver §4.5). |
@@ -60,7 +60,6 @@ Leyenda: 🟢 viable en el plazo · 🟡 viable con riesgo / recorte · 🔴 fue
 | Recomendador combinatorio | 🟢 | Greedy/beam en backend con los modelos reales. |
 | Juegos del mismo camino | 🟢 | `NearestNeighbors`/cosine sobre el vector estandarizado. |
 | Umbrales ajustables | 🟢 | Regresión de owners → reclasificación client-side sin reentrenar. |
-| Variante post-lanzamiento | 🟡 | Segundo track; depende del tiempo. Bien rotulado para evitar confusión con el pre-lanzamiento. |
 | Estética Steam + Power BI | 🟢 | ECharts vendorizado + paleta Steam en CSS. |
 | NLP de la descripción | 🟡 | Da señal real, pero es lo más caro. *Stretch* del domingo. |
 | Entrenar en Databricks | 🟢 | Un único `train_models.py` corre igual en laptop y en notebook Databricks (evita sacar `.joblib` del serverless). |
@@ -89,7 +88,7 @@ Ya existentes que se exponen como inputs: `supported_languages`, `price`, `total
 `min_ram_gb`, `controller_support`, `dev_experience`, plataformas, géneros, categorías, 48 tags.
 
 **Anti-fuga (recordatorio):** el predictor pre-lanzamiento **excluye** `positive`, `negative`, `rating_porcentaje`,
-`metacritic_score`, `ccu`, `owners_lower_bound` y todos los `ts_*`. Esas columnas solo viven en el track post-lanzamiento.
+`metacritic_score`, `ccu`, `owners_lower_bound` y todos los `ts_*`. Esas columnas quedan fuera de todo modelado (rol `outcome` en el diccionario).
 
 ### 3.2 Script `build_dataset_v2.py`
 
@@ -145,12 +144,7 @@ Tres señales, combinadas en un indicador visual:
 2. **Margen top-2** (diferencia entre 1ª y 2ª clase): margen pequeño → "el modelo duda".
 3. **Desacuerdo entre modelos**: si LR/SVM/MLP no coinciden en la clase, se rotula como predicción inestable.
 
-### 4.6 Track post-lanzamiento (punto 4)
-
-Modelo gemelo que **sí** usa señales tempranas (`positive`, `negative`, `rating_porcentaje`, `ccu`, primeros `ts_*`).
-Se entrena aparte y se expone como un toggle "ya lancé / aún no" en el Simulador. Nunca se mezcla con el pre-lanzamiento.
-
-### 4.7 Script `train_models.py` (reproducible)
+### 4.6 Script `train_models.py` (reproducible)
 
 - Un único script que corre **igual en la laptop y en un notebook Databricks** (`08_train_all.py`).
 - Lee el dataset (CSV local o tabla Unity Catalog), entrena todo, y guarda:
@@ -177,7 +171,6 @@ Se entrena aparte y se expone como un toggle "ya lancé / aún no" en el Simulad
 - Controles: precio, idiomas, achievements, DLCs, RAM, controller support, experiencia dev/publisher, mes de
   lanzamiento, early access, y matriz de tags/géneros/categorías.
 - Salida: P(Flop/Rentable/Hit) del modelo seleccionado + indicador de incertidumbre (§4.5).
-- Toggle "ya lancé / aún no" → cambia al track post-lanzamiento.
 
 ### 5.3 Página — Comparación de modelos
 
@@ -371,7 +364,6 @@ Nada de v1 se modifica ni se borra.
 
 1. **Entrenamiento:** ✅ `train_models.py` único (corre en laptop y en Databricks). Hecho.
 2. **NLP de descripción:** ✅ *stretch* — se intenta en el finde sin arriesgar el deadline.
-3. **Post-lanzamiento:** ✅ toggle "ya lancé / aún no" dentro del Simulador (no página propia).
 4. **Carpetas:** ✅ `app/` + `web/` + `models/` + `reports/`, bien estructurado, v1 intacta.
 5. **Backend:** ✅ Python stdlib `http.server` (no FastAPI) — por Python 3.14 (wheels de pydantic-core inciertos) + reproducibilidad cero-dependencias para la presentación.
 6. **Estrato `owners==0`:** ⏳ pendiente — evaluar tras ver el balance (Hit cayó a 18% con los datos nuevos). Riesgo: etiquetar como Flop juegos que solo carecen de estimación de SteamSpy. Se decide antes de un reentrenamiento final.
@@ -384,7 +376,7 @@ Nada de v1 se modifica ni se borra.
 
 - 2026-06-03 — Inventario del repo v1 + investigación de viabilidad (ECharts, FastAPI, repos reusables). Plan v2 redactado. — `Plan v2 - Dashboard Comercial Customizable.md`
 - 2026-06-03 — Git: `git pull` de `971ee1b` (+1961 juegos exitosos). Conteos reales: 32.966 totales / **7.824 con owners>0**. — `output/*.csv`
-- 2026-06-03 — Decisiones confirmadas (§12): backend stdlib, post-lanzamiento como toggle, carpetas `app/web/models/reports`, `train_models.py` único. ECharts vendorizado (`vendor/echarts.min.js`, 1007 KB).
+- 2026-06-03 — Decisiones confirmadas (§12): backend stdlib, alcance pre-lanzamiento, carpetas `app/web/models/reports`, `train_models.py` único. ECharts vendorizado (`vendor/echarts.min.js`, 1007 KB).
 - 2026-06-03 — Apartado de ingeniería de datos creado y verificado: anonimización SHA-256 (developer/publisher) + análisis Spark RDD para Databricks + verificación local con pandas. Archivos de referencia del curso movidos a `referencia/`. — `ingenieria_datos/`
 - 2026-06-03 — **Fase 0 COMPLETA**: `build_dataset_v2.py` (7.817 juegos, 92 features, 9 nuevas, 0 nulos) + `train_models.py` (LR/SVM/MLP/owners-reg/NN + Bayes LOO). Test: MLP AUC 0.888 / F1 0.74 / acc 0.77. Artefactos cargan y predicen OK. — `models/`, `reports/`
 - 2026-06-03 — **Fase 1 COMPLETA**: backend stdlib (`app/server.py` + `inference.py` + `stats.py`). Endpoints predict/recommend/similar/stats/games/config verificados por HTTP. Recomendador beam search sube P(Hit) de 0.19→0.65 en una prueba RPG; similares devuelve juegos coherentes. — `app/`
@@ -394,17 +386,16 @@ Nada de v1 se modifica ni se borra.
 - 2026-06-03 — `notebooks/08_train_all.py`: entrenamiento consolidado v2 en Databricks (LR+GridSearchCV, SVM-RBF, MLP, owners-reg) que guarda `model_metrics_v2` y `model_lr_coefficients_v2` en Unity Catalog. Lógica validada localmente (mismas 92 features y métricas que `train_models.py`). — `notebooks/`
 - 2026-06-03 — Documentación del estudio (`Documentacion del Estudio - Predictor v2.md`), README v2, y push de todos los commits a GitHub (bajo SamDev).
 - 2026-06-03 — **Explicabilidad por predicción**: `/api/predict` devuelve los factores que más mueven P(Hit) (contribución por perturbación, modelo-agnóstica); tarjeta nueva en el Simulador.
-- 2026-06-03 — **Modelo post-lanzamiento**: 3 modelos (`post_*.joblib`) que añaden señales de recepción (ccu, rating, metacritic, playtime). MLP 0.888 → **0.907 AUC**. Toggle "ya lancé / aún no" en el Simulador. Doc del estudio §5.5 actualizada.
 - 2026-06-03 — **Rediseño del frontend integrado** (commit `2e8de58`): nuevo `web/index.html` (estética Steam, terminal flotante estilo macOS, fuentes, animaciones) cableado al backend real (predict/recommend/similar/stats/games/game). Verificado headless con Playwright: las 5 vistas renderizan con datos reales, 0 errores JS. SPA anterior (`web/js`, `web/css`) eliminado.
 - 2026-06-03 — Notebooks **01-07 alineados a v2**: el 01 añade las categóricas nuevas (pub_experience/price_tier/release_quarter) y excluye las temporales → produce 12 num / 75 bool / 5 cat = 92 features (validado localmente); 02-07 las toman por ser schema-driven.
-- _(nota: el nuevo diseño aún no incluye la tarjeta de explicabilidad ni el toggle post-lanzamiento; quedan para integrar en el rediseño si se desea)_
+- _(nota: el nuevo diseño aún no incluye la tarjeta de explicabilidad; queda para integrar si se desea)_
 - 2026-06-03 — **Experimento modelo en 2 etapas** (`train_stage1.py`): etapa de tracción (owners>0 sobre 33k) AUC 0.96, pero **confundida por artefactos de recolección** (platform_windows coef ≈ −9.3, fechas faltantes; SteamSpy vs catálogo poblaron metadata distinto).
-- 2026-06-03 — **Embudo de 2 etapas rescatado por filtro**: filtrar a juegos con metadata completa (fecha+plataforma+clasificación+desc, 17.565 juegos) elimina el artefacto → tracción AUC 0.89 honesta (bueno 51% vs pobre 4%). Reactivado en el backend y mostrado en el simulador. Informe §5.6 reescrito (sesgo detectado y corregido).
+- 2026-06-03 — **Embudo de 2 etapas rescatado por filtro**: filtrar a juegos con metadata completa (fecha+plataforma+clasificación+desc, 17.565 juegos) elimina el artefacto → tracción AUC 0.89 honesta (bueno 51% vs pobre 4%). Reactivado en el backend y mostrado en el simulador. Informe §5.5 reescrito (sesgo detectado y corregido).
 - 2026-06-03 — **Consolidación a v2**: eliminados los archivos de la v1 estática (`steampredict_dashboard_comercial.html`, `index.html`, `export_model_web.py`, `embed_model_in_html.py`) y el plan v1. README a v2-only. `output/model_web.json` se conserva (lo usa el panel para la importancia). Nota: la URL de GitHub Pages deja de funcionar (la v2 requiere backend local).
 - 2026-06-06 — **QA con navegador real** (extensión Chrome): organización `scripts/`+`docs/`, N dinámico, botón Reiniciar, `Cache-Control: no-cache` (el navegador servía HTML viejo), comando `find` de la terminal cableado al backend (usaba el catálogo mock).
 - 2026-06-06 — **Precio realista**: el slider llega a $200 pero el modelo penaliza el sobreprecio (decae desde $70; a $200 P(Hit)≈0.002 y owners ~15k) en vez de extrapolar a Hit. `_price_realism_factor` en `inference.py`.
 - 2026-06-06 — **Panel analítico reactivo y exacto**: donut con el catálogo completo (32.966 = N del header, segmento gris "sin datos"); histograma/géneros/trimestres resaltan la configuración simulada; scatter con 1.200 juegos identificables por nombre + "Tu juego" con clase y P(Hit); métrica de trimestres corregida (decía "% no-Rentable", calculaba "% Rentable o Hit").
-- 2026-06-06 — **Precios AAA reparados** (`scripts/fix_price_outliers.py`): 46 juegos con precio en moneda regional re-consultados a Steam con `cc=us` (Cyberpunk $199→$59.99, RDR2 $53.990→$59.99). Dataset regenerado + 5 modelos reentrenados: MLP **AUC 0.890 / F1 0.741 / acc 0.769**, recall de Hit 60%→64%. Informe §5.7 nueva.
+- 2026-06-06 — **Precios AAA reparados** (`scripts/fix_price_outliers.py`): 46 juegos con precio en moneda regional re-consultados a Steam con `cc=us` (Cyberpunk $199→$59.99, RDR2 $53.990→$59.99). Dataset regenerado + 5 modelos reentrenados: MLP **AUC 0.890 / F1 0.741 / acc 0.769**, recall de Hit 60%→64%. Informe §5.6 nueva.
 - 2026-06-06 — **Deploy en línea**: `render.yaml` + `server.py` con PORT/HOST por entorno + `requirements.txt` con versiones exactas. Producción: **https://steampredict.onrender.com** (plan free, ~30-60s de arranque en frío). Verificada la API completa en producción.
 - 2026-06-06 — **Explicaciones en la UI**: icono "?" con tooltip en los 7 gráficos del panel analítico y en las tarjetas del simulador/recomendaciones (qué muestra, cómo se calcula, cómo leerlo). README e informe actualizados.
 

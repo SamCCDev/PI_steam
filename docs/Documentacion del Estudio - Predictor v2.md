@@ -59,8 +59,8 @@ Para un estudio sin juegos previos, el valor se reduce a la media global.
 
 El simulador es pre-lanzamiento, así que se excluyen todas las variables que solo se conocen una vez que el
 juego salió a la venta: reseñas positivas y negativas, porcentaje de valoración, nota de Metacritic, jugadores
-concurrentes y los agregados mensuales de la serie temporal. Esas columnas permanecen en el conjunto, pero
-quedan reservadas para un eventual modelo post-lanzamiento.
+concurrentes y los agregados mensuales de la serie temporal. Esas columnas permanecen en el conjunto con su
+etapa marcada en el diccionario de datos, pero ningún modelo las consume.
 
 ## 4. Modelado
 
@@ -135,18 +135,7 @@ aunque su error en escala absoluta es alto, algo esperable dado que SteamSpy rep
 - Entre los factores que la regresión logística asocia a la categoría Hit aparecen el número de etiquetas, el
   soporte multijugador y la experiencia previa del estudio.
 
-### 5.5 Modelo post-lanzamiento
-
-Además del predictor pre-lanzamiento se entrenó una variante que incorpora señales tempranas de recepción,
-disponibles una vez publicado el juego: jugadores concurrentes, porcentaje de reseñas positivas, nota de
-Metacritic, proporción positiva y horas jugadas promedio. Se excluye el volumen bruto de reseñas, que sería un
-sustituto casi directo del número de propietarios.
-
-Con esas señales el AUC del perceptrón sube de 0,888 a 0,907. La lectura es directa: el diseño del juego deja
-un margen de incertidumbre que solo se cierra cuando llegan los primeros datos de cómo lo recibe el público. El
-dashboard refleja esto con un interruptor "aún no lo lancé / ya lo lancé" que alterna entre ambos modelos.
-
-### 5.6 Modelo en dos etapas (embudo) y un sesgo de recolección corregido
+### 5.5 Modelo en dos etapas (embudo) y un sesgo de recolección corregido
 
 Se exploró un enfoque de embudo en dos etapas: una primera etapa que estimara si el juego logra tracción
 comercial (que SteamSpy reporte propietarios) sobre los 32.959 juegos del catálogo, y una segunda condicionada
@@ -179,7 +168,7 @@ etapa 2, los cuatro resultados (sin tracción / Flop / Rentable / Hit). La lecci
 un AUC alto puede esconder un sesgo de recolección; auditar los coeficientes lo reveló, y filtrar por completitud
 de metadata recuperó un modelo válido sin descargar más datos.
 
-### 5.7 Calidad de datos: reparación de precios en moneda regional
+### 5.6 Calidad de datos: reparación de precios en moneda regional
 
 Durante las pruebas del simulador se detectó que varios títulos muy conocidos figuraban con precios
 imposibles: Cyberpunk 2077 a 199 dólares, ELDEN RING a 249 o Red Dead Redemption 2 a 53.990. La revisión del
@@ -212,8 +201,8 @@ Steam (carpeta `ingenieria_datos/`).
   conteos y agregaciones (25.248 estudios únicos, distribución de géneros). Demuestra que el flujo escala más
   allá de lo que cabe en una sola máquina.
 - **Datos de panel.** La serie mensual de reseñas (una observación por juego y mes) tiene estructura de panel.
-  Se reserva para el seguimiento post-lanzamiento, donde la evolución temprana de las reseñas sirve para
-  refinar la predicción.
+  En este estudio se usa solo de forma agregada para describir el conjunto; explotar su dimensión temporal
+  queda como línea futura (sección 8).
 
 El entrenamiento es reproducible en dos entornos: en local con `train_models.py` y en Databricks con el
 notebook 08, que deja las métricas y los coeficientes como tablas de Unity Catalog.
