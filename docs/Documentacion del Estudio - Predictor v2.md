@@ -202,7 +202,7 @@ Steam (carpeta `ingenieria_datos/`).
   allá de lo que cabe en una sola máquina.
 - **Datos de panel.** La serie mensual de reseñas (una observación por juego y mes) tiene estructura de panel.
   En este estudio se usa solo de forma agregada para describir el conjunto; explotar su dimensión temporal
-  queda como línea futura (sección 8).
+  queda como línea futura (sección 9).
 
 El entrenamiento es reproducible en dos entornos: en local con `train_models.py` y en Databricks con el
 notebook 08, que deja las métricas y los coeficientes como tablas de Unity Catalog.
@@ -224,7 +224,89 @@ juegos reales identificables por nombre. Cada gráfico y cada tarjeta del simula
 con una explicación de qué muestra, cómo se calcula y cómo leerlo, pensada para que el panel se entienda sin
 necesidad de un presentador al lado.
 
-## 8. Limitaciones y trabajo futuro
+## 8. Guía de conceptos del dashboard (apoyo para el estudio)
+
+Esta sección explica, en lenguaje llano, qué significa cada elemento que muestra el dashboard y por qué se
+construyó así. Está pensada como material de estudio para la defensa.
+
+### 8.1 Por qué tres modelos y por qué se entrenaron así
+
+Los tres clasificadores comparten exactamente el mismo preprocesamiento, y eso es deliberado: si cada modelo
+viera los datos de forma distinta, la comparación entre ellos no diría nada. Las variables numéricas se
+estandarizan (media 0, desviación 1) porque la SVM y el perceptrón son sensibles a la escala: sin
+estandarizar, una variable en dólares y otra que cuenta tags competirían en unidades incomparables. Las
+categóricas se convierten a one-hot y las binarias pasan directo.
+
+El parámetro `class_weight="balanced"` responde al desbalance de clases (54 % Rentable, 27 % Flop, 18 % Hit).
+Sin él, un modelo perezoso aprendería a responder "Rentable" casi siempre y aun así acertaría la mitad de las
+veces. Con los pesos balanceados, equivocarse en un Hit —la clase minoritaria— cuesta más que equivocarse en
+un Rentable, y el modelo se ve obligado a aprender las tres categorías.
+
+La partición 80/20 es estratificada: el 20 % de prueba conserva la misma proporción de clases que el total.
+Todas las métricas reportadas se miden únicamente sobre ese 20 % que los modelos jamás vieron durante el
+entrenamiento; medir sobre los datos de entrenamiento solo demostraría memoria, no capacidad de generalizar.
+
+La elección de los tres algoritmos también tiene lógica: la regresión logística es lineal e interpretable
+(sus coeficientes alimentan el gráfico de importancia de variables y el motor de recomendaciones); la SVM con
+kernel RBF captura fronteras no lineales; y el perceptrón multicapa modela interacciones complejas entre
+variables y resultó el de mejor desempeño. Comparar un modelo simple contra dos progresivamente más flexibles
+permite ver cuánta señal adicional aporta la complejidad.
+
+### 8.2 El embudo comercial de dos etapas
+
+El simulador responde dos preguntas encadenadas. La primera: ¿este juego logrará siquiera una tracción
+comercial medible? Es un problema binario, entrenado con 17.565 juegos de metadata completa, donde el 73 %
+nunca registra ventas estimables. La segunda: suponiendo que vende, ¿cuánto? Ahí entra el clasificador de
+tres clases, entrenado solo con los 7.817 juegos que sí vendieron.
+
+La separación importa porque el clasificador aprendió únicamente de juegos que entraron al mercado; aplicarlo
+directo a cualquier configuración asumiría que todo juego vende algo, lo cual el propio dataset desmiente.
+Las cuatro franjas del embudo salen de multiplicar probabilidades —por ejemplo, P(Hit total) = P(tracción) ×
+P(Hit | vende)— y siempre suman 100 %: sin tracción, Flop, Rentable y Hit.
+
+### 8.3 Probabilidad de no-Flop
+
+Es la suma P(Rentable) + P(Hit): la probabilidad de que el juego al menos recupere la inversión. Se muestra
+como indicador propio porque, para decidir si lanzar, a un estudio le suele importar más "no perder dinero"
+que "ser un éxito masivo". Una configuración con 15 % de Hit pero 80 % de no-Flop es una apuesta razonable;
+una con 25 % de Hit pero 50 % de no-Flop es una moneda al aire.
+
+### 8.4 Incertidumbre
+
+Una probabilidad sin su nivel de confianza invita a malas decisiones, así que el dashboard la acompaña de dos
+señales. El margen top-2 es la diferencia entre las dos clases más probables: si la predicción es 45 %
+Rentable contra 43 % Flop, el modelo en realidad está dudando, aunque "gane" Rentable. El desacuerdo entre
+modelos compara la clase ganadora de los tres algoritmos: como cada uno mira los datos con una lente distinta
+(lineal, kernel, red neuronal), que los tres coincidan es evidencia de una señal robusta, y que discrepen
+delata un caso ambiguo. El nivel mostrado (baja/media/alta) combina ambas señales.
+
+### 8.5 Métricas de evaluación
+
+- **Accuracy (exactitud).** Porcentaje de aciertos. Es la métrica más intuitiva pero la más engañosa con
+  clases desbalanceadas: responder siempre "Rentable" daría 54 % de exactitud sin haber aprendido nada. Por
+  eso nunca se reporta sola.
+- **F1-macro.** Para cada clase combina precisión (de lo que predije como X, cuánto era X) y recall (de los X
+  reales, cuántos encontré) en una media armónica, y luego promedia las tres clases sin ponderar por tamaño.
+  Eso obliga a rendir bien también en la clase minoritaria (Hit): descuidarla hunde el F1-macro aunque la
+  exactitud global se mantenga.
+- **AUC (OVR-macro).** Mide capacidad de ordenamiento: la probabilidad de que el modelo asigne mayor puntaje
+  a un caso positivo que a uno negativo, promediada tratando cada clase contra el resto. Es independiente del
+  umbral de decisión; 0,5 equivale al azar y 1,0 a separación perfecta. Es la métrica que delató el sesgo de
+  recolección de la sección 5.5: un AUC "demasiado bueno" merece auditoría, no celebración.
+- **Matriz de confusión.** Muestra dónde se equivoca el modelo, no solo cuánto. En este problema los errores
+  se concentran entre clases vecinas (Flop↔Rentable, Rentable↔Hit), lo que es coherente con una variable
+  ordinal: el modelo casi nunca confunde los extremos.
+
+### 8.6 Owners estimados e ingreso bruto
+
+El número de propietarios sale de una regresión independiente (gradient boosting) entrenada sobre el
+logaritmo de los owners — se usa logaritmo porque la variable abarca varios órdenes de magnitud (de miles a
+decenas de millones) y en escala cruda los pocos gigantes dominarían el ajuste. Esta estimación alimenta el
+punto "Tu juego" del panel analítico y permite reclasificar con umbrales ajustables. El ingreso bruto es una
+aproximación deliberadamente simple: owners × precio × 70 % (la comisión de Steam es ~30 %), sin descontar
+rebajas ni precios regionales; debe leerse como cota de referencia, no como proyección financiera.
+
+## 9. Limitaciones y trabajo futuro
 
 - El número de propietarios es una cota inferior estimada por SteamSpy, no la cifra exacta de ventas. Los
   umbrales heredan esa imprecisión.
