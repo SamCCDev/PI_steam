@@ -8,7 +8,6 @@
 
   Endpoints:
     GET  /                  -> web/index.html
-    GET  /api/config        -> esquema de features para armar el formulario
     GET  /api/stats         -> agregados para el panel analítico
     GET  /api/games?q=...   -> búsqueda de juegos reales
     GET  /api/game/<appid>  -> features de un juego real (modo validación)
@@ -96,8 +95,6 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         path, qs = u.path, parse_qs(u.query)
         try:
-            if path == "/api/config":
-                return self._json(inf.get_config())
             if path == "/api/stats":
                 return self._json(stats.get_stats())
             if path == "/api/games":

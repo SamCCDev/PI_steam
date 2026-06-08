@@ -6,7 +6,6 @@
   (scikit-learn / pandas / numpy / joblib). Lo consume app/server.py.
 
   Funciones públicas:
-    get_config()                 -> esquema + grupos de features para armar el form
     predict(features, model)     -> probabilidades por modelo + incertidumbre + owners
     recommend(features, K, model)-> mejor paquete de cambios (beam search) para subir P(Hit)
     similar(features, k)         -> juegos reales del "mismo camino" (NearestNeighbors)
@@ -367,25 +366,3 @@ def get_game(appid: int) -> dict:
     return {"appid": int(appid), "name": str(row["name"]),
             "clase_real": str(row["label_name"]), "owners_real": int(row["owners_lower_bound"]),
             "features": feats}
-
-
-# ── API: config para construir el formulario en el frontend ───────────────
-def get_config() -> dict:
-    groups = {"genre": [], "cat": [], "tag": [], "platform": []}
-    for c in BOOL_FEATS:
-        for p in groups:
-            if c.startswith(p + "_"):
-                groups[p].append({"col": c, "label": pretty_label(c),
-                                  "prevalencia": round(PREVALENCE[c], 3),
-                                  "mutable": c in MUTABLE_BOOLS})
-                break
-    numeric = {c: {**SCHEMA["numeric"][c], "label": pretty_label(c)} for c in NUM_FEATS}
-    return {
-        "classes": CLASSES,
-        "thresholds": THRESHOLDS,
-        "models": list(MODELS.keys()),
-        "numeric": numeric,
-        "categorical": SCHEMA["categorical"],
-        "groups": groups,
-        "dev_prior_global": SCHEMA.get("dev_prior_global"),
-    }

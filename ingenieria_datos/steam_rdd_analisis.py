@@ -3,10 +3,9 @@
 #
 # Curso: Ingenieria de Datos I - 2026
 # Origen del patron: reproduce el ejercicio de RDDs del curso
-#   referencia/01_ejercicio (1).ipynb (sc.textFile -> split por separador
-#   -> conteos y distinct), que contaba registros y polizas unicas de las
-#   importaciones de Bolivia. Aqui aplicamos las MISMAS operaciones RDD a
-#   nuestros datos de Steam.
+#   (sc.textFile -> split por separador -> conteos y distinct), que
+#   contaba registros y polizas unicas de las importaciones de Bolivia.
+#   Aqui aplicamos las MISMAS operaciones RDD a nuestros datos de Steam.
 #
 # COMO EJECUTAR:
 #   - Databricks Free Edition: Spark viene nativo y gratis. Subir el CSV al

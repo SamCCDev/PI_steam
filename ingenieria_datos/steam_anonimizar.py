@@ -2,10 +2,10 @@
 # Anonimizacion SHA-256 aplicada a los datos de Steam del proyecto.
 #
 # Curso: Ingenieria de Datos I - 2026
-# Origen del patron: reproduce la funcion `anonimizar` y la logica de
-#   referencia/01_convertir_anonimizar 1.py (Autor original: William
-#   Mauricio Hurtado), que convertia xlsx de importaciones de Bolivia a
-#   CSV anonimizado con hash SHA-256.
+# Origen del patron: reproduce la funcion `anonimizar` y la logica del
+#   ejercicio de aduanas del curso (Autor original: William Mauricio
+#   Hurtado), que convertia xlsx de importaciones de Bolivia a CSV
+#   anonimizado con hash SHA-256.
 #
 # Como los xlsx de aduanas NO estan en este repo, aplicamos la MISMA
 # tecnica a nuestros datos reales: anonimizamos los campos 'developer' y
@@ -25,8 +25,8 @@ import os
 def anonimizar(valor):
     """Anonimiza un valor sensible usando hash SHA-256.
 
-    Funcion identica a la del archivo de referencia del curso
-    (01_convertir_anonimizar 1.py). Convierte el valor a un hash
+    Funcion identica a la del ejercicio de aduanas del curso.
+    Convierte el valor a un hash
     irreversible de 16 caracteres. Si el valor es vacio, None o el
     string literal 'null', retorna un string vacio sin aplicar el hash.
 

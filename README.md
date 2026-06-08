@@ -115,12 +115,27 @@ estudio calculado *leave-one-out* para no filtrar la propia etiqueta).
 ### Calidad de datos: precios de moneda regional
 
 El scrape original capturó 46 precios en moneda regional o de otra edición (Cyberpunk 2077 a $199,
-Red Dead Redemption 2 a $53.990). `scripts/fix_price_outliers.py` los re-consulta contra la Steam
-Storefront API forzando región US (`cc=us`) y reescribe `games_metadata.csv` (con respaldo `.bak`);
-los precios altos legítimos (RPG Maker, juegos de precio-broma a $200) se conservan. Tras la
-reparación se regeneró el dataset y se reentrenaron los modelos.
+Red Dead Redemption 2 a $53.990). Se re-consultaron esos 46 appids contra la Steam Storefront API
+forzando región US (`cc=us`) y se reescribió `games_metadata.csv`; los precios altos legítimos
+(RPG Maker, juegos de precio-broma a $200) se conservaron. Tras la reparación se regeneró el dataset
+y se reentrenaron los modelos. La corrección ya está aplicada en los CSV versionados.
 
 ---
+
+## Entorno
+
+Todo el pipeline local (ETL, dataset, entrenamiento y backend) corre con un único entorno.
+Las versiones exactas están en `requirements.txt` (las mismas que usa Render).
+
+```bash
+# Opción A — micromamba / conda / mamba (entorno aislado, recomendado)
+micromamba create -f environment.yml
+micromamba activate steampredict
+
+# Opción B — venv + pip
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
 ## Reproducir el pipeline
 
@@ -184,13 +199,13 @@ estudio/distribuidora (`steam_anonimizar.py`) y **análisis con Spark RDD** sobr
 ```text
 ├── README.md                     # esta guía
 ├── requirements.txt              # versiones exactas (los .joblib requieren scikit-learn 1.8.0)
+├── environment.yml               # entorno micromamba/conda (reusa requirements.txt)
 ├── render.yaml                   # blueprint del despliegue en Render (plan free)
 ├── scripts/                      # pipeline de datos y entrenamiento (correr desde la raíz)
 │   ├── steam_etl.py              #   ETL concurrente (Steam Storefront + SteamSpy + Reviews)
 │   ├── build_dataset.py          #   consolida los 4 CSV en el master ML-ready
 │   ├── train_models.py           #   fuente única de entrenamiento (local y Databricks)
-│   ├── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
-│   └── fix_price_outliers.py     #   repara precios de moneda regional re-consultando Steam (cc=us)
+│   └── train_stage1.py           #   etapa 1 del embudo: modelo de tracción (datos filtrados)
 ├── app/                          # backend (Python stdlib, sin dependencias)
 │   ├── server.py                 #   http.server + router de endpoints
 │   ├── inference.py              #   carga de modelos, predict, recommend, similar, embudo

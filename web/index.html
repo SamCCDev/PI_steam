@@ -713,25 +713,16 @@ select:focus{border-color:var(--accent-dim)}
 
 <script id="data-layer">
 /* ============================================================
-   CAPA DE DATOS — formas reales del backend (mock, sin fetch).
-   Reemplazar predict()/los MOCK_* por llamadas a /api/* al integrar.
+   CAPA DE DATOS — ya cableada al backend real (app/server.py).
    ------------------------------------------------------------
-   MAPA DE INTEGRACIÓN (mock actual → endpoint real sugerido):
-     MOCK_CONFIG    → GET  /api/config      (campos del modelo: numéricas, categóricas, chips)
-     MODEL          → (embebido)            coeficientes LR exportados; el backend hará la inferencia
-     predict(state) → POST /api/predict     {modelos, consenso, owners, ingreso, incertidumbre}
-     MOCK_SIMILAR   → GET  /api/similar      juegos reales parecidos (incluye appid para la portada)
-     MOCK_STATS     → GET  /api/stats/*      dataset de entrenamiento para el panel analítico:
-                        .market      → /api/stats/market      (distribución de clases)
-                        .price_hist  → /api/stats/prices       (histograma de precios)
-                        .owners_by_genre → /api/stats/genres   (owners + %Hit por género)
-                        .importance  → /api/stats/importance   (coef. del modelo)
-                        .scatter     → /api/stats/scatter       (precio vs owners)
-                        .confusion   → /api/stats/confusion     (matriz, test set)
-                        .metrics     → /api/metrics             (AUC/F1/Accuracy por modelo)
-                        .hit_by_quarter → /api/stats/seasonality
-     recommend()    → POST /api/recommend   (o se mantiene local; mismo shape de retorno)
-   Mantén los SHAPES de retorno y el resto del dashboard funciona sin cambios.
+   MOCK_CONFIG : define los campos del formulario (numéricas, categóricas,
+                 chips de tags). Es la fuente real; no se descarga.
+   MOCK_STATS  : valores placeholder; init() los sobrescribe con GET /api/stats
+                 al arrancar (el panel analítico siempre muestra datos reales).
+   MOCK_SIMILAR: placeholder; la vista de similares usa POST /api/similar.
+   Inferencia en vivo (fetch): POST /api/predict · /api/recommend · /api/similar,
+   GET /api/games · /api/game/<appid> · /api/stats.
+   (El nombre MOCK_* es histórico; hoy solo son los valores por defecto.)
    ============================================================ */
 const CLASSES = ["Flop","Rentable","Hit"];
 const CLASS_COLOR = { Flop:"#c75450", Rentable:"#66c0f4", Hit:"#a4d007" };
@@ -882,96 +873,8 @@ MOCK_STATS.scatter = (function(){
   return pts;
 })();
 
-/* ============================================================
-   MODELO REAL — Regresión Logística multinomial (Flop/Rentable/Hit).
-   Coeficientes exportados del backend (export_model_web.py).
-   El cálculo (StandardScaler + softmax) reproduce sklearn.predict_proba.
-   svm/mlp se derivan por escalado de temperatura sobre los logits LR
-   para que la vista "Comparar modelos" y la incertidumbre sean reactivas.
-   >> Al integrar: reemplazar predict() por una llamada a /api/predict. <<
-   ============================================================ */
-const MODEL = {"classes":["Flop","Rentable","Hit"],"intercept":{"Flop":-2.645362340848415,"Rentable":2.1613703905467943,"Hit":0.4839919503011387},"coef":{"Flop":{"price":-0.1542947474405714,"total_achievements":-0.05326599857508078,"total_dlcs":-0.7701280944508077,"supported_languages":-0.1785952879081611,"min_ram_gb":-0.0686597667757907,"dev_game_count":-0.014325214035605768,"short_desc_len":0.018316752823858345,"is_free":0.22103181901708888,"platform_windows":4.881824252658656,"platform_mac":-0.4254148152408296,"platform_linux":-0.1825674089124099,"genre_action":-0.28046110342265584,"genre_adventure":0.13008301429298966,"genre_casual":0.45643113596255847,"genre_indie":0.22754454599289098,"genre_massively_multiplayer":-0.1045111047114349,"genre_rpg":-0.16370813851442398,"genre_racing":0.022804161992137348,"genre_simulation":0.08810702122893391,"genre_sports":0.41010576715671454,"genre_strategy":0.17653428833015938,"genre_violent":0.7354420682892998,"genre_gore":-0.2701515202519101,"genre_early_access":0.16781606378138844,"cat_single_player":0.38854709068575183,"cat_multi_player":0.006128959578877933,"cat_co_op":0.09719191742182363,"cat_online_co_op":-0.13703906697129029,"cat_full_controller_support":-0.15679265752782554,"cat_partial_controller_support":-0.1618729998570893,"cat_steam_achievements":0.13594758952104327,"cat_steam_cloud":-0.14895518792636978,"cat_steam_workshop":-0.5359687093486768,"cat_in_app_purchases":-0.7948096797104962,"cat_steam_trading_cards":-0.5899728210610496,"cat_remote_play_together":-0.0073188031944317194,"cat_shared_split_screen_co_op":0.07920868845301518,"tag_first_person":-0.3054149322967892,"tag_open_world":-0.6179948654826803,"tag_crafting":0.37743770384149766,"tag_story_rich":-0.5149038575974274,"tag_survival":-0.13602195569867304,"tag_horror":-0.26795320191059807,"tag_rpg":-0.11794921568094455,"tag_action_rpg":-0.05928479875331777,"tag_turn_based":-0.1464940942861461,"tag_strategy":-0.3427799347327832,"tag_tower_defense":0.04343959503180484,"tag_platformer":-0.3229729272842112,"tag_metroidvania":-0.00711710139325233,"tag_co_op":-0.5351831896324679,"tag_multiplayer":-0.8334594716859945,"tag_local_co_op":-0.020587857120508073,"tag_pvp":0.12486628772862843,"tag_battle_royale":-0.34089901285267904,"tag_sandbox":-0.6138610893887181,"tag_simulation":-0.17844178764005914,"tag_management":-0.1417825659785003,"tag_city_builder":-0.1928216001696207,"tag_sports":-0.1039161063618404,"tag_racing":0.21412574357030267,"tag_puzzle":0.003707965647260827,"tag_point_&_click":-0.1334100923423197,"tag_visual_novel":0.014326396657657272,"tag_anime":0.11113741309284127,"tag_2d":0.18600878753997793,"tag_3d":0.17953620604840415,"tag_realistic":0.2492978723452412,"tag_cartoon":0.033868614322896486,"tag_dark":0.18681512701153472,"tag_atmospheric":-0.47599620285428595,"tag_relaxing":0.17312056226224484,"tag_difficult":-0.6696306970430322,"tag_casual":-0.32075382673478814,"tag_indie":0.009648966073996675,"tag_early_access":0.003404166860999898,"tag_free_to_play":-0.6470538306298792,"tag_vr":0.23757865998328642,"tag_moba":0.25890373476702705,"tag_fps":-0.21826917384816913,"tag_stealth":-0.07536189706613165,"dev_experience_AAA":-0.30972522923822404,"dev_experience_Establecido":-0.07815899343528983,"dev_experience_Novato":0.11909554533954347,"controller_support_full":-0.15679265752782554,"controller_support_none":-0.1119960198061553},"Rentable":{"price":-0.019918677821287156,"total_achievements":0.034928901292058806,"total_dlcs":0.39642143467889035,"supported_languages":0.013101440236852488,"min_ram_gb":0.02851248134535504,"dev_game_count":-0.11080456129005604,"short_desc_len":0.015977307640021202,"is_free":-0.2059224600463348,"platform_windows":-3.797911221646799,"platform_mac":-0.009607593706609008,"platform_linux":0.2167020715442008,"genre_action":0.11226656923910146,"genre_adventure":-0.04929248054849209,"genre_casual":-0.0438912480181844,"genre_indie":0.0707889624120438,"genre_massively_multiplayer":0.21520676210195694,"genre_rpg":0.1918712453907928,"genre_racing":0.26627681804837944,"genre_simulation":0.06866665538473395,"genre_sports":-0.0062539480504206066,"genre_strategy":0.05807101425148016,"genre_violent":-0.6673820568436353,"genre_gore":0.8692294381805075,"genre_early_access":0.024071552933022412,"cat_single_player":-0.12139917246573903,"cat_multi_player":-0.1304810527579812,"cat_co_op":0.12722577297631582,"cat_online_co_op":-0.1266619236313091,"cat_full_controller_support":0.05166364942359204,"cat_partial_controller_support":-0.11112191527214235,"cat_steam_achievements":0.059828619428467955,"cat_steam_cloud":0.030103301372936465,"cat_steam_workshop":-0.01893724379673862,"cat_in_app_purchases":0.20915118106643021,"cat_steam_trading_cards":0.14227529765346386,"cat_remote_play_together":0.21318649182522398,"cat_shared_split_screen_co_op":-0.22815542623854024,"tag_first_person":0.12467835948462158,"tag_open_world":0.1946258735649701,"tag_crafting":0.03185056209013804,"tag_story_rich":0.0712946821803127,"tag_survival":-0.08181975819580219,"tag_horror":0.21145042230680675,"tag_rpg":-0.09134812150721376,"tag_action_rpg":-0.02956591156327466,"tag_turn_based":0.07382962225043356,"tag_strategy":0.1101479667349212,"tag_tower_defense":0.09166569719655557,"tag_platformer":0.2859699188786163,"tag_metroidvania":-0.24047162675177328,"tag_co_op":0.08025324508482183,"tag_multiplayer":0.21761604466789267,"tag_local_co_op":-0.038648659821284057,"tag_pvp":-0.20035243299594502,"tag_battle_royale":0.035485344703427374,"tag_sandbox":0.16349810505486334,"tag_simulation":-0.09889506938988392,"tag_management":-0.09655199171050219,"tag_city_builder":0.1984817442573554,"tag_sports":-0.20068417566669128,"tag_racing":-0.29735099374679796,"tag_puzzle":-0.03740811436231629,"tag_point_&_click":0.1272246605542391,"tag_visual_novel":-0.044280490997229305,"tag_anime":0.03222525817306081,"tag_2d":-0.1495394376090469,"tag_3d":-0.036407899128140506,"tag_realistic":-0.057765724041992615,"tag_cartoon":-0.08239697355945441,"tag_dark":-0.18430546827431382,"tag_atmospheric":0.06545540627103849,"tag_relaxing":-0.10553446217810834,"tag_difficult":0.1972384763992321,"tag_casual":0.06901745296714545,"tag_indie":0.03477080352160384,"tag_early_access":0.06957110487141921,"tag_free_to_play":0.23039924238505471,"tag_vr":-0.1826209460282771,"tag_moba":-0.12315059227701368,"tag_fps":-0.04695167515266243,"tag_stealth":0.024001848179361684,"dev_experience_AAA":0.17895092517189387,"dev_experience_Establecido":-0.013861443331439722,"dev_experience_Novato":0.04511504224982962,"controller_support_full":0.05166364942359204,"controller_support_none":0.158540874666702},"Hit":{"price":0.1742134252618547,"total_achievements":0.01833709728302991,"total_dlcs":0.3737066597719039,"supported_languages":0.1654938476712829,"min_ram_gb":0.04014728543041585,"dev_game_count":0.12512977532564823,"short_desc_len":-0.03429406046388606,"is_free":-0.01510935897074995,"platform_windows":-1.0839130310118519,"platform_mac":0.4350224089474318,"platform_linux":-0.03413466263179426,"genre_action":0.16819453418355748,"genre_adventure":-0.08079053374452816,"genre_casual":-0.4125398879443649,"genre_indie":-0.29833350840494194,"genre_massively_multiplayer":-0.11069565739052206,"genre_rpg":-0.028163106876368017,"genre_racing":-0.2890809800405109,"genre_simulation":-0.15677367661366237,"genre_sports":-0.4038518191062997,"genre_strategy":-0.23460530258164414,"genre_violent":-0.06806001144567304,"genre_gore":-0.5990779179285941,"genre_early_access":-0.19188761671441235,"cat_single_player":-0.2671479182200013,"cat_multi_player":0.1243520931791183,"cat_co_op":-0.22441769039815196,"cat_online_co_op":0.26370099060259766,"cat_full_controller_support":0.10512900810423206,"cat_partial_controller_support":0.27299491512924023,"cat_steam_achievements":-0.19577620894950917,"cat_steam_cloud":0.11885188655346712,"cat_steam_workshop":0.5549059531454089,"cat_in_app_purchases":0.5856584986440735,"cat_steam_trading_cards":0.4476975234075936,"cat_remote_play_together":-0.20586768863079438,"cat_shared_split_screen_co_op":0.14894673778552334,"tag_first_person":0.18073657281217792,"tag_open_world":0.42336899191771776,"tag_crafting":-0.4092882659316348,"tag_story_rich":0.44360917541711986,"tag_survival":0.2178417138944764,"tag_horror":0.05650277960377837,"tag_rpg":0.20929733718816096,"tag_action_rpg":0.08885071031659078,"tag_turn_based":0.07266447203571581,"tag_strategy":0.23263196799784144,"tag_tower_defense":-0.1351052922283597,"tag_platformer":0.037003008405599454,"tag_metroidvania":0.24758872814502542,"tag_co_op":0.4549299445476559,"tag_multiplayer":0.6158434270181421,"tag_local_co_op":0.05923651694179259,"tag_pvp":0.07548614526731734,"tag_battle_royale":0.3054136681492475,"tag_sandbox":0.4503629843338503,"tag_simulation":0.2773368570299417,"tag_management":0.2383345576890099,"tag_city_builder":-0.005660144087731651,"tag_sports":0.3046002820285336,"tag_racing":0.08322525017649335,"tag_puzzle":0.0337001487150417,"tag_point_&_click":0.006185431788081477,"tag_visual_novel":0.029954094339573127,"tag_anime":-0.1433626712658954,"tag_2d":-0.036469349930947643,"tag_3d":-0.14312830692026401,"tag_realistic":-0.19153214830324275,"tag_cartoon":0.048528359236558356,"tag_dark":-0.0025096587372282955,"tag_atmospheric":0.41054079658322135,"tag_relaxing":-0.06758610008413889,"tag_difficult":0.47239222064379627,"tag_casual":0.2517363737676434,"tag_indie":-0.044419769595609254,"tag_early_access":-0.0729752717324206,"tag_free_to_play":0.41665458824481966,"tag_vr":-0.0549577139550074,"tag_moba":-0.13575314249000667,"tag_fps":0.2652208490008426,"tag_stealth":0.05136004888676973,"dev_experience_AAA":0.1307743040663359,"dev_experience_Establecido":0.09202043676674074,"dev_experience_Novato":-0.1642105875894448,"controller_support_full":0.10512900810423206,"controller_support_none":-0.04654485486058887}},"numeric":{"price":{"mean":8.989399624765479,"scale":13.513395546623425},"total_achievements":{"mean":46.171413951901755,"scale":206.01213379684617},"total_dlcs":{"mean":3.259764625618284,"scale":24.52488799305734},"supported_languages":{"mean":7.6452328159645235,"scale":9.242170665919247},"min_ram_gb":{"mean":3.6073273068395024,"scale":3.320826317780986},"dev_game_count":{"mean":1.776564898516118,"scale":2.9060359945487337},"short_desc_len":{"mean":216.20603786457445,"scale":71.20068078755922}},"boolean":["is_free","platform_windows","platform_mac","platform_linux","genre_action","genre_adventure","genre_casual","genre_indie","genre_massively_multiplayer","genre_rpg","genre_racing","genre_simulation","genre_sports","genre_strategy","genre_violent","genre_gore","genre_early_access","cat_single_player","cat_multi_player","cat_co_op","cat_online_co_op","cat_full_controller_support","cat_partial_controller_support","cat_steam_achievements","cat_steam_cloud","cat_steam_workshop","cat_in_app_purchases","cat_steam_trading_cards","cat_remote_play_together","cat_shared_split_screen_co_op","tag_first_person","tag_open_world","tag_crafting","tag_story_rich","tag_survival","tag_horror","tag_rpg","tag_action_rpg","tag_turn_based","tag_strategy","tag_tower_defense","tag_platformer","tag_metroidvania","tag_co_op","tag_multiplayer","tag_local_co_op","tag_pvp","tag_battle_royale","tag_sandbox","tag_simulation","tag_management","tag_city_builder","tag_sports","tag_racing","tag_puzzle","tag_point_&_click","tag_visual_novel","tag_anime","tag_2d","tag_3d","tag_realistic","tag_cartoon","tag_dark","tag_atmospheric","tag_relaxing","tag_difficult","tag_casual","tag_indie","tag_early_access","tag_free_to_play","tag_vr","tag_moba","tag_fps","tag_stealth"],"categorical":{"dev_experience":{"categories":["AAA","Establecido","Novato"],"default":"Novato"},"controller_support":{"categories":["full","none"],"default":"none"}}};
-
-/**
- * buildVals(state) — construye el vector de features para el modelo.
- * Aplica EXACTAMENTE las mismas transformaciones que sklearn en entrenamiento:
- *   · numéricas → estandarizadas (x - mean) / scale  (StandardScaler)
- *   · booleanas → 0/1 según los chips activos (state.flags)
- *   · categóricas → one-hot por categoría (col_categoria = 1 si seleccionada)
- * @param {{numeric,flags,cats}} state  estado actual del simulador
- * @returns {Object} mapa feature→valor numérico listo para el producto punto
- * INTEGRACIÓN: si el backend hace la predicción, esto deja de usarse (lo hace el servidor).
- */
-function buildVals(state){
-  const v = {};
-  for(const [name,p] of Object.entries(MODEL.numeric)){
-    const raw = (state.numeric[name] != null) ? state.numeric[name] : (MOCK_CONFIG.numeric[name]?.median ?? 0);
-    v[name] = (raw - p.mean) / p.scale;
-  }
-  for(const b of MODEL.boolean) v[b] = state.flags[b] ? 1 : 0;
-  if((state.numeric.price||0) === 0) v["is_free"] = 1;
-  for(const [col,info] of Object.entries(MODEL.categorical)){
-    const chosen = state.cats[col] || info.default;
-    for(const cat of info.categories) v[`${col}_${cat}`] = (cat===chosen)?1:0;
-  }
-  return v;
-}
-/** lrLogits(vals) — logits por clase = intercepto + Σ(coef·feature). Núcleo de la regresión logística multinomial. */
-function lrLogits(vals){
-  const lg = {};
-  for(const c of MODEL.classes){ let s=MODEL.intercept[c]; const cf=MODEL.coef[c];
-    for(const k in cf) s += cf[k]*(vals[k]||0); lg[c]=s; }
-  return lg;
-}
-/** softmaxT(logits,T) — softmax con temperatura T (T>1 suaviza, T<1 marca). Convierte logits → probabilidades por clase. */
-function softmaxT(lg, T){
-  const vals = MODEL.classes.map(c=>lg[c]/T);
-  const mx = Math.max(...vals); let z=0; const e=vals.map(x=>{const v=Math.exp(x-mx);z+=v;return v;});
-  const p={}; MODEL.classes.forEach((c,i)=>p[c]=e[i]/z); return p;
-}
-/** argmax(probs) — devuelve la clase con mayor probabilidad. */
-function argmax(p){ return MODEL.classes.reduce((a,b)=>p[a]>=p[b]?a:b); }
-
-/**
- * predict(state) — PUNTO DE INTEGRACIÓN PRINCIPAL.
- * Hoy calcula todo localmente con el modelo LR embebido:
- *   · lr  = softmax(logits, T=1)        ← la regresión logística real
- *   · svm = softmax(logits, T=1.55)     ← derivado (márgenes más suaves)
- *   · mlp = softmax(logits, T=0.62)     ← derivado (distribución más marcada)
- *   · consenso = promedio de los 3 modelos
- *   · owners/ingreso = derivados de P(Hit)/P(Rentable) y el precio
- *   · incertidumbre = margen top1-top2 (mlp) + desacuerdo entre modelos
- * >>> AL INTEGRAR: reemplazar el cuerpo por:
- *     const r = await fetch('/api/predict', {method:'POST', body:JSON.stringify(state)}).then(x=>x.json());
- *     return r;   // mismo shape: {modelos, consenso, owners, ingreso, incertidumbre}
- * Mantener el shape de retorno y el resto del dashboard sigue funcionando igual.
- * @returns {{modelos:{lr,svm,mlp}, consenso, owners:number, ingreso:number, incertidumbre}}
- */
-function predict(state){
-  const lg = lrLogits(buildVals(state));
-  const modelos = {
-    lr:  probObj(softmaxT(lg,1.0)),   // LR real
-    svm: probObj(softmaxT(lg,1.55)),  // márgenes más suaves
-    mlp: probObj(softmaxT(lg,0.62))   // distribución más marcada
-  };
-  // consenso = promedio de los 3 modelos
-  const cons={}; MODEL.classes.forEach(c=>cons[c]=(modelos.lr.probs[c]+modelos.svm.probs[c]+modelos.mlp.probs[c])/3);
-  const consenso = probObj(cons);
-  // owners e ingreso derivados de la mezcla de clases y el precio
-  const pHit=cons.Hit, pRent=cons.Rentable, price=state.numeric.price||0;
-  const owners = Math.round(45000*Math.pow(10, pHit*1.45 + pRent*0.35));
-  const ef = price===0 ? 0.0 : price;
-  const ingreso = Math.round(owners * ef * 0.16 * 0.65); // conversión×precio×(1-corte Steam)
-  // incertidumbre: margen top1-top2 del modelo de referencia (mlp) + desacuerdo entre modelos
-  const ref = modelos.mlp.probs;
-  const sorted = [...MODEL.classes].sort((a,b)=>ref[b]-ref[a]);
-  const margen = +(ref[sorted[0]]-ref[sorted[1]]).toFixed(3);
-  const desacuerdo = new Set([modelos.lr.clase,modelos.svm.clase,modelos.mlp.clase]).size > 1;
-  const nivel = (margen>0.5 && !desacuerdo) ? "baja" : (margen>0.22 ? "media" : "alta");
-  return { modelos, consenso, owners, ingreso,
-    incertidumbre:{ margen_top2:margen, desacuerdo, nivel, modelo_ref:"mlp" } };
-}
-function probObj(p){ return { probs:p, clase:argmax(p) }; }
+/** argmax(probs) -> clase con mayor probabilidad (usada por apiPredict). */
+function argmax(p){ return CLASSES.reduce((a,b)=>p[a]>=p[b]?a:b); }
 </script>
 <script id="app-layer">
 /* ============================================================ APP */
@@ -988,7 +891,7 @@ function resetState(){
   for(const k in state.cats) delete state.cats[k];
   for(const [k,p] of Object.entries(MOCK_CONFIG.numeric)) state.numeric[k]=p.median;
   Object.assign(state.numeric,{price:14.99,supported_languages:8,total_achievements:40,total_dlcs:2});
-  for(const b of MODEL.boolean) state.flags[b]=0;
+  for(const g of ALL_GROUPS) for(const it of MOCK_CONFIG.groups[g]) state.flags[it.col]=0;
   // configuración de arranque: un proyecto realista y "al filo" (Hit/Flop ~50/50)
   ['cat_single_player','platform_windows','cat_steam_achievements',
    'genre_action','genre_adventure','genre_rpg','genre_indie',
@@ -1001,9 +904,9 @@ resetState();
 let LAST=null;
 
 /* ============================================================ BACKEND REAL
-   Cliente HTTP + mapeo state↔features. Reemplaza al modelo local embebido:
-   la inferencia (LR/SVM/MLP + owners + incertidumbre + explicabilidad) la hace
-   app/server.py sobre los .joblib reales. El modelo local queda como fallback. */
+   Cliente HTTP + mapeo state↔features. La inferencia completa (LR/SVM/MLP +
+   owners + incertidumbre + explicabilidad + embudo) la hace app/server.py sobre
+   los .joblib reales; el frontend no contiene ningún modelo. */
 const API={
   async get(p){const r=await fetch(p);if(!r.ok)throw new Error('GET '+p+' '+r.status);return r.json();},
   async post(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});if(!r.ok)throw new Error('POST '+p+' '+r.status);return r.json();}
@@ -1392,7 +1295,7 @@ function renderView(id){
  * buildInputs() — construye el panel de Parámetros del simulador desde MOCK_CONFIG.
  * Sliders numéricos (2 columnas), selects categóricos y grupos de chips colapsables
  * (género/tag/categoría/plataforma). Cada control escribe en `state` y dispara recompute().
- * INTEGRACIÓN: MOCK_CONFIG describe los campos del modelo; vendría de /api/config.
+ * MOCK_CONFIG define los campos del modelo (fuente local; el resto se infiere en el backend).
  */
 function buildInputs(){
   const body=$('#inputBody'); body.innerHTML='';
@@ -1483,8 +1386,7 @@ function recompute(){ clearTimeout(rcTimer); rcTimer=setTimeout(doRecompute,90);
 /**
  * doRecompute() — pipeline central: recalcula la predicción y refresca lo visible.
  * Se dispara (con debounce, ver recompute()) cada vez que cambia un slider, select o chip.
- * Llama a predict(state), guarda el resultado en LAST y re-renderiza solo la vista activa.
- * INTEGRACIÓN: si predict() pasa a ser async (/api/predict), volver esta función async/await.
+ * Llama a apiPredict(state) (POST /api/predict), guarda el resultado en LAST y re-renderiza la vista activa.
  */
 async function doRecompute(){
   let r;
@@ -1634,16 +1536,11 @@ function buildAnGrid(){
  * renderAnalytic() — Panel analítico: 7 gráficos de ECharts sobre el dataset de entrenamiento.
  * Donut de mercado, histograma de precios, owners/%Hit por género, importancia de variables,
  * scatter precio/owners, matriz de confusión y %Hit por trimestre.
- * INTEGRACIÓN: todos leen de MOCK_STATS; cada bloque vendría de /api/stats/* (ver comentarios inline).
+ * Lee de MOCK_STATS, que init() ya rehidrató con datos reales desde GET /api/stats.
  */
 function renderAnalytic(){
   if(!anBuilt){ buildAnGrid(); anBuilt=true; }
   // ── mercado: donut de distribución de clases ──────────────────────────────
-  // NOTA INTEGRACIÓN: hoy usa MOCK_STATS.market (conteos fijos del dataset de
-  // entrenamiento). Cuando el backend exponga el conteo EXACTO de los juegos
-  // cargados/clasificados en vivo, reemplazar `marketData` por algo como:
-  //   const counts = await fetch('/api/stats/market').then(r=>r.json());
-  //   const marketData = counts.map(c => ({clase:c.clase, n:c.n}));
   // y `marketTotal` por la suma real (counts.reduce((s,c)=>s+c.n,0)).
   const marketData = MOCK_STATS.market;
   const classTotal = marketData.reduce((s,m)=>s+m.n,0);
@@ -1795,7 +1692,7 @@ function renderCompare(){
  * La portada se carga del CDN de Steam usando el appid:
  *   https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/header.jpg
  * con fallback al placeholder si la imagen no existe (onerror).
- * INTEGRACIÓN: MOCK_SIMILAR.juegos ← /api/similar (debe traer appid, name, developer, clase, owners, price, similitud).
+ * Datos en vivo vía POST /api/similar (trae appid, name, developer, clase, owners, price, similitud).
  */
 async function renderSimilar(){
   $('#simLegend').innerHTML=CLASSES.map(c=>`<span class="it"><span class="sw" style="background:${CLASS_COLOR[c]}"></span>${c}</span>`).join('');
@@ -1820,39 +1717,6 @@ async function renderSimilar(){
 }
 
 /* ============================================================ VIEW: Recomendaciones (live) */
-/**
- * recommend() — motor de recomendaciones (corre 100% local sobre predict()).
- * · Evalúa cada chip mutable apagado y mide su ΔP(Hit) individual (mlp).
- * · Construye el "mejor paquete" con búsqueda greedy de 3 pasos (añade el cambio
- *   que más sube P(Hit) en cada iteración, acumulando).
- * INTEGRACIÓN: si el backend tiene su propio recomendador, reemplazar por /api/recommend
- *   (shape: {modelo, phit_antes, phit_despues, delta, cambios[], cambios_individuales[]}).
- */
-function recommend(){
-  const refModel='mlp';
-  const phitOf=s=>predict(s).modelos[refModel].probs.Hit;
-  const before=phitOf(state);
-  // candidatos: cols mutables (genre/tag/cat) actualmente apagados
-  const cands=[];
-  ['genre','tag','cat'].forEach(g=>MOCK_CONFIG.groups[g].forEach(it=>{ if(it.mutable && !state.flags[it.col]) cands.push(it); }));
-  const clone=s=>({numeric:{...s.numeric},flags:{...s.flags},cats:{...s.cats}});
-  // individuales
-  const indiv=cands.map(it=>{ const s=clone(state); s.flags[it.col]=1; return {desc:`Añadir '${it.label}'`,delta:+(phitOf(s)-before).toFixed(3)}; });
-  // precio óptimo (probar 9.99/19.99/4.99)
-  [4.99,9.99,19.99].forEach(p=>{ if(Math.abs(p-state.numeric.price)>0.5){ const s=clone(state); s.numeric.price=p; indiv.push({desc:`Ajustar precio a $${p}`,delta:+(phitOf(s)-before).toFixed(3)}); }});
-  if(state.cats.release_quarter!=='Q4'){ const s=clone(state); s.cats.release_quarter='Q4'; indiv.push({desc:"Lanzar en Q4 (temporada alta)",delta:+(phitOf(s)-before).toFixed(3)}); }
-  indiv.sort((a,b)=>b.delta-a.delta);
-  // mejor paquete: greedy 3 pasos
-  let cur=clone(state), curHit=before; const pack=[{desc:'Configuración actual',phit:before}];
-  for(let step=0;step<3;step++){
-    let best=null,bestS=null;
-    cands.forEach(it=>{ if(cur.flags[it.col])return; const s=clone(cur); s.flags[it.col]=1; const h=phitOf(s);
-      if(!best||h>best.phit) {best={desc:`Añadir '${it.label}'`,phit:+h.toFixed(3),feature:it.col}; bestS=s;} });
-    if(!best)break; cur=bestS; curHit=best.phit; pack.push(best);
-  }
-  return { modelo:refModel, phit_antes:before, phit_despues:pack[pack.length-1].phit,
-    delta:+(pack[pack.length-1].phit-before).toFixed(3), cambios:pack, cambios_individuales:indiv.slice(0,5) };
-}
 async function renderRecommend(){
   let R;
   try{

@@ -116,4 +116,4 @@ display(spark.createDataFrame(hit[["feature", "coef_logodds", "odds_ratio"]]))
 (spark.createDataFrame(coef_df)
       .write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(COEF_TABLE))
 
-print(f"Coeficientes (3 clases) guardados en {COEF_TABLE}. Continuar en 03_evaluation.")
+print(f"Coeficientes (3 clases) guardados en {COEF_TABLE}. Continuar en 03_svm.")

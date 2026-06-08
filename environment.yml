@@ -1,0 +1,24 @@
+# Entorno reproducible para micromamba / conda / mamba.
+# Cubre TODO el pipeline local: ETL, construcción del dataset, entrenamiento
+# (train_models.py + train_stage1.py), el backend del dashboard y el apartado
+# de ingeniería de datos (anonimización + verificación RDD local en pandas).
+#
+# Las versiones de las librerías viven en requirements.txt (fuente única, las
+# mismas que usa Render) para no duplicarlas; aquí solo se fija el intérprete.
+#
+#   micromamba create -f environment.yml
+#   micromamba activate steampredict
+#   python app/server.py            # -> http://127.0.0.1:8000
+#
+# Nota: los notebooks 01-08 corren en Databricks (Spark nativo); no necesitan
+# este entorno. El 08 solo importa scripts/train_models.py, que ya queda cubierto.
+# El análisis Spark de ingenieria_datos/steam_rdd_analisis.py también es para
+# Databricks; su verificación local (steam_rdd_analisis_local.py) usa solo pandas.
+name: steampredict
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14          # misma versión que el despliegue en Render
+  - pip
+  - pip:
+      - -r requirements.txt

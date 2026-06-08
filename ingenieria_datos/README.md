@@ -23,15 +23,9 @@ ingenieria_datos/
 ├── steam_anonimizar.py             # (1) anonimización SHA-256 sobre Steam
 ├── steam_rdd_analisis.py           # (2) análisis Spark RDD (Databricks / pyspark)
 ├── steam_rdd_analisis_local.py     # (2') verificación local sin Spark (pandas)
-├── output/
-│   └── games_metadata_anon.csv     # salida del script de anonimización
-└── referencia/                     # material original del curso (intacto)
-    ├── 01_convertir_anonimizar 1.py
-    └── 01_ejercicio (1).ipynb
+└── output/
+    └── games_metadata_anon.csv     # salida del script de anonimización
 ```
-
-La carpeta `referencia/` conserva los dos archivos del docente sin modificar, como
-fuente del patrón que se reproduce.
 
 ## Datos de entrada
 
@@ -46,10 +40,9 @@ Los scripts leen los CSV del proyecto (separador `;`):
 
 **Script:** `steam_anonimizar.py`
 
-Reproduce la función `anonimizar()` del archivo de referencia
-`referencia/01_convertir_anonimizar 1.py`: aplica `hashlib.sha256` y toma los
-primeros 16 caracteres hexadecimales; los valores vacíos, `None` o `'null'` se
-convierten en cadena vacía. El hash es determinista (un mismo nombre siempre
+Reproduce la función `anonimizar()` del ejercicio de aduanas del curso: aplica
+`hashlib.sha256` y toma los primeros 16 caracteres hexadecimales; los valores
+vacíos, `None` o `'null'` se convierten en cadena vacía. El hash es determinista (un mismo nombre siempre
 produce el mismo identificador) e irreversible.
 
 Sobre los datos de Steam anonimiza las columnas `developer` y `publisher`,
@@ -79,7 +72,7 @@ Ejemplo: developer "Valve" -> 094db509c61fd2da
 
 **Script:** `steam_rdd_analisis.py`
 
-Reproduce el patrón del ejercicio `referencia/01_ejercicio (1).ipynb`
+Reproduce el patrón del ejercicio de RDDs del curso
 (`sc.textFile` → `map(split)` → conteos y `distinct`) usando exclusivamente
 operaciones de RDD: `map`, `filter`, `distinct`, `flatMap`, `reduceByKey`,
 `count`, `takeOrdered`. Calcula:
