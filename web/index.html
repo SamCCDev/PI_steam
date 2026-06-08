@@ -1690,7 +1690,7 @@ function renderCompare(){
 /**
  * renderSimilar() — vista "Juegos del mismo camino": tarjetas de juegos reales parecidos.
  * La portada se carga del CDN de Steam usando el appid:
- *   https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/header.jpg
+ *   https://cdn.akamai.steamstatic.com/steam/apps/{appid}/header.jpg
  * con fallback al placeholder si la imagen no existe (onerror).
  * Datos en vivo vía POST /api/similar (trae appid, name, developer, clase, owners, price, similitud).
  */
@@ -1703,7 +1703,7 @@ async function renderSimilar(){
   $('#similarCards').innerHTML=MOCK_SIMILAR.juegos.map((j,i)=>{
     const tc={Flop:'flop',Rentable:'rent',Hit:'hit'}[j.clase];
     return `<div class="gcard" style="--gi:${i}"><div class="gcard-cap">
-        <img class="gcard-img" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${j.appid}/header.jpg"
+        <img class="gcard-img" src="https://cdn.akamai.steamstatic.com/steam/apps/${j.appid}/header.jpg"
              alt="${j.name}" loading="lazy" referrerpolicy="no-referrer"
              onload="this.classList.add('loaded')"
              onerror="this.remove()">
