@@ -534,11 +534,34 @@ select:focus{border-color:var(--accent-dim)}
 /* card stagger */
 .gcard{ animation:gcardIn .38s cubic-bezier(.22,.61,.36,1) forwards; animation-delay:calc(var(--gi,0)*.055s); }
 @keyframes gcardIn{ from{transform:translateY(8px) scale(.98)} to{transform:none} }
+/* ---------- responsive (laptops + escalado de Windows) ---------- */
+/* El header es una sola fila sin wrap: en pantallas angostas se ocultan
+   primero los elementos decorativos (subtítulo de marca, pill "N=") para
+   que las pestañas con texto quepan, y solo por debajo de 1200 las
+   pestañas pasan a modo icono. Antes desbordaba y recortaba letras. */
+@media (max-width:1400px){
+  .brand-sub{display:none}
+  .stat-pill{display:none}
+  .nav-tab{padding:0 12px}
+}
 @media (max-width:1200px){
   .kpis{grid-template-columns:repeat(2,1fr)}
   .sim-layout{grid-template-columns:1fr}
   .nav-tab .lbl{display:none}
-  .search{width:160px}
+  .nav-tab{gap:0;padding:0 12px}
+  .search{width:170px}
+}
+@media (max-width:880px){
+  .search{display:none}
+  .brand{padding:0 12px}
+  .header-right{gap:8px;padding:0 12px}
+  .num-grid{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .mode-switch{display:none}
+  .view{padding:14px 12px 22px}
+  .vtitle{font-size:19px}
+  .subgrid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -1261,7 +1284,7 @@ const VIEWS=[
 let activeView='an';
 const nav=$('#nav');
 VIEWS.forEach(v=>{
-  const b=document.createElement('button'); b.className='nav-tab'; b.dataset.id=v.id;
+  const b=document.createElement('button'); b.className='nav-tab'; b.dataset.id=v.id; b.title=v.label;
   b.innerHTML=`<svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="${v.icon}"/></svg><span class="lbl">${v.label}</span>`;
   b.addEventListener('click',()=>showView(v.id));
   nav.appendChild(b);
