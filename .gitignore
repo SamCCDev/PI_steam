@@ -39,3 +39,9 @@ output/dataset_stage1.csv
 output/*.bak
 VIDEO_GAMES_v/
 VIDEO_GAMES_v.docx
+
+# Documentacion interna (no publicar): solo se publica el documento consolidado
+# "Documentacion Completa - Predictor de Videojuegos.md". Los demas se conservan en disco.
+docs/Bitacora - Dashboard Comercial.md
+docs/Documentacion del Estudio - Predictor.md
+docs/Documento Tecnico - Predictor de Videojuegos.md
