@@ -188,9 +188,12 @@ descargar archivos del serverless salvo vía un Volume de UC).
 
 ## Apartado de Ingeniería de Datos
 
-`ingenieria_datos/` aplica dos técnicas del curso a los datos de Steam: **anonimización SHA-256** de
-estudio/distribuidora (`steam_anonimizar.py`) y **análisis con Spark RDD** sobre los 32.966 registros
-(`steam_rdd_analisis.py`, para Databricks; con verificación local en pandas). Ver `ingenieria_datos/README.md`.
+`ingenieria_datos/` aplica cuatro técnicas del curso a los datos de Steam: **anonimización SHA-256** de
+estudio/distribuidora (`steam_anonimizar.py`), **análisis con Spark RDD** sobre los 32.966 registros
+(`steam_rdd_analisis.py`), **perfilado de calidad de datos** con PySpark DataFrame — nulos y dominios
+categóricos (`steam_calidad_datos.py`) — y la **comparación RDD vs DataFrame** sobre las mismas métricas
+(`steam_rdd_vs_dataframe.py`). Los scripts Spark corren en Databricks y cada técnica tiene verificación
+local en pandas; `steam_verificar_entorno.py` valida el entorno antes de empezar. Ver `ingenieria_datos/README.md`.
 
 ---
 
@@ -216,7 +219,7 @@ estudio/distribuidora (`steam_anonimizar.py`) y **análisis con Spark RDD** sobr
 ├── models/                       # *.joblib + feature_schema.json + stage1.joblib
 ├── reports/                      # metrics.json, confusion_*.json, stage1.json
 ├── notebooks/                    # Databricks: 01–08 (08 = invoca train_models.py)
-├── ingenieria_datos/             # apartado del curso: anonimización SHA-256 + Spark RDD
+├── ingenieria_datos/             # apartado del curso: SHA-256, Spark RDD, calidad de datos, RDD vs DF
 └── output/                       # datasets (CSV, separador ';')
 ```
 

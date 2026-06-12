@@ -45,3 +45,6 @@ VIDEO_GAMES_v.docx
 docs/Bitacora - Dashboard Comercial.md
 docs/Documentacion del Estudio - Predictor.md
 docs/Documento Tecnico - Predictor de Videojuegos.md
+
+# Grafo de conocimiento local (regenerable con /graphify)
+graphify-out/
